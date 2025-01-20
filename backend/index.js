@@ -527,29 +527,31 @@ app.get("/proposal/insert", (req, res) => {
       JSON.stringify(object[1])
     )})`
   );
-  res.send("ok");
+  res.status(200).send({ status: "success", messaage: "Successfully sent" });
 });
 app.get("/proposal/search", (req, res) => {
+  const { id } = req.headers;
+  if (!id) {
+    res.status(400).send({ status: "failed", message: "data invalid" });
+    return;
+  }
   con.query(
-    `select * from proposal where contractorID=${req.headers.id};`,
+    `select * from proposal where contractorID=${id};`,
     (err, result) => {
       if (err) {
-        console.log(err);
+        res
+          .status(505)
+          .send({ status: "failed", message: "data could not be searched" });
         return;
       }
-      console.log(
-        result,
-        "kkkookokookkookkookokokookokokokokokkookokkookokkokookokokkookkookokkokookokokokkookokkokkokokookkookook"
-      );
-      res.send(result);
+      res.send({ result, status: "success" });
       return;
     }
   );
 });
 app.listen(3000, (err) => {
-  console.log("hello");
+  console.log("Server Started");
 });
-
 /*
 {
 "crop":  "wheat",
