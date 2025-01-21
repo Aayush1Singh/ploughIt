@@ -19,58 +19,37 @@ const Background = styled.div`
 function Login() {
   const dispatch = useDispatch();
   const { register, formState, handleSubmit } = useForm();
-  const { errors } = formState;
-  let auth = false;
-  const [isAuth, setAuth] = useState(false);
-  // const { isauth } = useCheckAuth();
   const navigate = useNavigate();
+  const { errors } = formState;
+  const [role, setRole] = useState("farmer");
+  const [isAuth, setAuth] = useState(false);
   function onSubmit(data) {
-    console.log(data);
-    const a = async function () {
-      console.log(data);
-      const myHeaders = new Headers();
-      myHeaders.append("1", "2");
-      myHeaders.append("Content-Type", "application/json");
-
-      const raw = JSON.stringify(data);
-
-      const requestOptions = {
-        headers: data,
-        body: raw,
-        redirect: "follow",
-      };
-
+    const login = async function (data) {
       axios
-        .get("http://localhost:3000/signin", requestOptions)
+        .get("http://localhost:3000/signin", {
+          headers: data,
+        })
         .then((response, error) => {
           if (error) {
-            console.log(response.data);
             return;
           }
-          console.log(response, error);
           localStorage.setItem("jwt", response.data.accessToken);
-          console.log(response.data.id);
           dispatch(
             logIn({ email: data.email, role: data.role, id: response.data.id })
           );
-          auth = true;
           navigate("/home/dashboard");
         })
         .catch((error) => {
-          console.error(error);
+          //toast failed login  error msg
+          console.log(error);
         });
     };
-    a();
+    login(data);
   }
-  const userF = useSelector((state) => state.user);
-
-  console.log(userF, "popopoplplplplp");
-
   function onError(err) {
+    //toast validation error
     console.log(err);
   }
-  const [role, setRole] = useState("farmer");
-  // if (auth) navigate("/dashboard");
   return (
     <Background>
       <Form onSubmit={handleSubmit(onSubmit, onError)}>

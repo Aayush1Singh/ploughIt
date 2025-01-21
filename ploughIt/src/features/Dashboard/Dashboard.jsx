@@ -6,24 +6,20 @@ import Proposals from "./Proposals";
 import { useSelector } from "react-redux";
 
 export default function Dashboard() {
-  const { a: role } = useUserRole();
+  const { role, id, email } = useSelector((state) => state.user);
+  const user = useSelector((state) => state.user);
   const [data, setData] = useState([]);
-  const id = useSelector((state) => state.user.id);
   const [proposalData, setProposalData] = useState([]);
-  console.log(role);
   function updateData(data1) {
-    return setData((data) => data1);
+    setData((data) => data1);
   }
   useEffect(() => {
-    console.log(role);
-    if (!role || !role.id) return;
+    if (!id) return;
     axios
       .get("http://localhost:3000/contractor/demand", {
-        headers: { data: JSON.stringify({ id: role.id }) },
+        headers: { data: JSON.stringify({ id }) },
       })
       .then((response) => {
-        console.log(role);
-        console.log(response);
         updateData(response.data);
       })
       .catch((error) => console.log(error));
@@ -32,14 +28,13 @@ export default function Dashboard() {
         headers: { id },
       })
       .then((response) => {
-        console.log(response.data);
-        setProposalData(response.data);
-      });
-  }, [role]);
-  console.log(data);
+        setProposalData(response.data.result);
+      })
+      .catch((err) => console.log(err));
+  }, []);
   return (
     <>
-      <DemandsTable data={data} contractorID={role.id}></DemandsTable>
+      <DemandsTable data={data} contractorID={id}></DemandsTable>
       <Proposals data={proposalData}></Proposals>
     </>
   );

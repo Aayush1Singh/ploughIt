@@ -44,7 +44,6 @@ function TableRow({ data }) {
         });
     }
   }, [isOpen]);
-  console.log(originalData);
   return (
     <StyledTableRow onClick={(e) => setOpenModal(true)}>
       <p>{data.demandID}</p>
@@ -130,8 +129,6 @@ function TableRow({ data }) {
   );
 }
 function Proposals({ data }) {
-  //proposals
-  console.log(data);
   return (
     <Table>
       <TableRow
@@ -139,7 +136,16 @@ function Proposals({ data }) {
       ></TableRow>
       {data &&
         data?.map((proposal) => (
-          <TableRow key={JSON.stringify(proposal)} data={proposal}></TableRow>
+          <TableRow
+            key={JSON.stringify(
+              [
+                proposal.contractorID,
+                proposal.farmerID,
+                proposal.created_at,
+              ].join(":")
+            )}
+            data={proposal}
+          ></TableRow>
         ))}{" "}
       <TableRow
         data={{

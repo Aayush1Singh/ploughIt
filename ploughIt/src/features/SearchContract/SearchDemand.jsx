@@ -75,14 +75,6 @@ const DemandWindow = styled.div`
   grid-template-columns: 1fr 1fr 1fr;
   display: grid;
 `;
-async function filtering(response, data1, data2) {
-  console.log(response);
-  const x = await response.in("preference", "organic");
-
-  console.log(x);
-  if (data2.length == 0) return response;
-  return await response.in(data1, data2);
-}
 async function searchAPI(
   crop,
   variety,
@@ -93,21 +85,7 @@ async function searchAPI(
   cursors,
   type
 ) {
-  console.log(
-    crop,
-    variety,
-    price,
-    quantity,
-    preference,
-    cursors,
-    duration,
-    type
-  );
   let data = {};
-
-  console.log(
-    `http://localhost:3000/demand/search${type === "" ? "" : `/${type}`}`
-  );
   await axios
     .get(
       `http://localhost:3000/demand/search${type === "" ? "" : `/${type}`}`,
@@ -127,26 +105,10 @@ async function searchAPI(
       }
     )
     .then((response) => {
-      console.log(response.data);
       data = response.data;
-      return response;
     })
     .catch((err) => console.log(err));
-  console.log(data);
   return data;
-  // let { data, error, isLoading } = await supabase
-  //   .from("demand")
-  //   .select()
-  //   .in("crop", crop)
-  //   .in("variety", variety)
-  //   .eq("preference", preference)
-  //   .gte("duration", duration[0])
-  //   .lte("duration", duration[1])
-  //   .gte("price", price)
-  //   .gte("quantity", quantity[0])
-  //   .lte("quantity", quantity[1])
-  //   .limit(6);
-  // return data;
 }
 function SearchDemand() {
   const [quantity, setQuantity] = useState([0, 100]);
@@ -183,12 +145,9 @@ function SearchDemand() {
   const queryClient = useQueryClient();
   useEffect(
     function () {
-      // queryClient.invalidateQueries(["searchResults"]);
       toggleLoading();
-      console.log(isPending, isLoading);
       const debounce = setTimeout(() => {
         queryClient.invalidateQueries(["searchResults"]);
-        console.log(isPending);
       }, 1000);
 
       toggleLoading();
@@ -207,7 +166,6 @@ function SearchDemand() {
       queryClient,
     ]
   );
-  console.log(data);
   return (
     <StyleSearch>
       <StyledDiv>
@@ -272,7 +230,6 @@ function SearchDemand() {
             onClick={(e) => {
               handleType("prev");
               setPage((page) => page - 1);
-              console.log(queryClient.getQueriesData("searchResults"));
             }}
           >
             &larr;Previous{" "}
@@ -283,7 +240,6 @@ function SearchDemand() {
             onClick={(e) => {
               handleType("next");
               setPage((page) => page + 1);
-              console.log(queryClient.getQueryData(["searchResults"]));
             }}
           >
             Next &rarr;
@@ -292,66 +248,6 @@ function SearchDemand() {
       </FlexIt>
     </StyleSearch>
   );
-  // return (
-  //   <OuterWrap onSubmit={handleSubmit(onSubmit)}>
-  //     <StyledDiv>
-  //       {" "}
-  //       <Autocomplete
-  //         id="crop"
-  //         freeSolo
-  //         multiple
-  //         options={top100Films.map((option) => option)}
-  //         renderInput={(params) => <TextField {...params} label="Crop" />}
-  //         {...register("crop")}
-  //       />{" "}
-  //       <Autocomplete
-  //         id="variety"
-  //         freeSolo
-  //         multiple
-  //         options={top100Films.map((option) => option)}
-  //         renderInput={(params) => <TextField {...params} label="Variety" />}
-  //       />{" "}
-  // <div>
-  //   <Label>Quantity</Label>
-  //   <Slider
-  //     getAriaLabel={() => "Temperature range"}
-  //     value={range}
-  //     onChange={(e) => {
-  //       setRange(e.target.value);
-  //     }}
-  //     valueLabelDisplay="auto"
-  //   />
-  // </div>
-  //       <Autocomplete
-  //         id="price"
-  //         freeSolo
-  //         multiple
-  //         options={top100Films.map((option) => option)}
-  //         renderInput={(params) => (
-  //           <TextField {...params} label="Estimated Buy Price" />
-  //         )}
-  //       />
-  //       <Autocomplete
-  //         id="duration"
-  //         freeSolo
-  //         multiple
-  //         options={top100Films.map((option) => option)}
-  //         renderInput={(params) => {
-  //           console.log(params);
-  //           return <TextField {...params} label="Duration" />;
-  //         }}
-  //       />
-  //       <Autocomplete
-  //         id="preference"
-  //         freeSolo
-  //         multiple
-  //         options={top100Films.map((option) => option)}
-  //         renderInput={(params) => <TextField {...params} label="preference" />}
-  //       />{" "}
-  //     </StyledDiv>
-  //     <button type="submit"></button>
-  //     <DemandCard data={cropDetails} />
-  //   </OuterWrap>
 }
 
 export default SearchDemand;

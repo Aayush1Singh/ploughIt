@@ -138,7 +138,6 @@ function TableRow({ data, contractorID }) {
   );
 }
 function DemandsTable({ data, contractorID }) {
-  console.log(data);
   return (
     <Table>
       <TableRow
@@ -154,7 +153,6 @@ function DemandsTable({ data, contractorID }) {
       ></TableRow>
       {data &&
         data?.map((item) => {
-          // console.log(item.auto_id);
           return (
             <TableRow
               key={item.auto_id}
