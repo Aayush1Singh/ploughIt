@@ -3,17 +3,53 @@ import cors from "cors";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mysql from "mysql";
+import cookieParser from "cookie-parser";
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
-  origin: "*",
+  origin: "http://localhost:5173",
   credentials: true,
+  // "access-control-allow-origin": true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
+const verifyJwt = (req, res, next) => {
+  const nonSecurePaths = ["/signin"];
+  if (nonSecurePaths.includes(req.path)) return next();
+  const { token } = req.headers;
+  console.log("hello", "lololo");
 
+  if (!token) {
+    res.status(400).send({ status: "failed", message: "Invalid token" });
+    return;
+  }
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(400).send({ status: "failed", message: "Expired" });
+  }
+};
 const app = express();
 app.use(express.json());
 app.use(cors(corsOption));
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Credentials", true);
+//   res.header("Access-Control-Allow-Origin", req.headers.origin);
+//   res.header(
+//     "Access-Control-Allow-Methods",
+//     "GET,PUT,POST,DELETE,UPDATE,OPTIONS"
+//   );
+//   res.header(
+//     "Access-Control-Allow-Headers",
+//     "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept"
+//   );
+//   next();
+// });
+
+app.use(verifyJwt);
 
 const con = mysql.createConnection({
   host: "localhost",
@@ -21,6 +57,7 @@ const con = mysql.createConnection({
   database: "ploughIt",
   user: "root",
   password: "aayush",
+  dateStrings: true,
 });
 con.connect(function (err) {
   if (err) {
@@ -29,7 +66,97 @@ con.connect(function (err) {
     console.log("connection created with mysql successfully");
   }
 });
+app.get("/signin", async (req, res) => {
+  const { password, email, role } = req.headers;
+  console.log(password, email, role);
 
+  if (!password || !email || !role) {
+    res.status(400).send({
+      status: "failed",
+      message: "Something not sent",
+    });
+    return;
+  }
+  con.query(`select * from ${role} where email="${email}"`, (err, result) => {
+    if (result.length == 0) {
+      res
+        .status(400)
+        .send({ status: "failed", error: "username/email invalid" });
+      return;
+    }
+    bcrypt.compare(
+      req.headers.password,
+      result[0].password,
+      async (error, isMatch) => {
+        if (error) {
+          res.status(505).send({
+            status: "failed",
+            message: "username/email invalid",
+          });
+          return;
+        }
+
+        if (isMatch) {
+          const id =
+            req.headers.role === "farmer"
+              ? result[0].farmerID
+              : result[0].contractorID;
+          const accessToken = jwt.sign(
+            {
+              email: req.headers.email,
+              role: req.headers.role,
+              id:
+                req.headers.role === "farmer"
+                  ? result[0].farmerID
+                  : result[0].contractorID,
+            },
+            jwtSecret,
+            { expiresIn: 5000 }
+          );
+          const refreshToken = jwt.sign(
+            {
+              email: req.headers.email,
+              role: req.headers.role,
+              id:
+                req.headers.role === "farmer"
+                  ? result[0].farmerID
+                  : result[0].contractorID,
+            },
+            jwtSecret,
+            { expiresIn: 1000 * 60 * 60 * 24 }
+          );
+          res.cookie("refreshToken", refreshToken);
+          res.status(200).send({
+            accessToken,
+            id:
+              req.headers.role === "farmer"
+                ? result[0].farmerID
+                : result[0].contractorID,
+          });
+          console.log("hello");
+          var today = new Date();
+          var expirationTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+          const hash = await bcrypt.hash(refreshToken, salt);
+          con.query(
+            `insert into refreshLogin(role,id,expiration,refreshToken) values('${
+              req.headers.role
+            }',${id},'${expirationTime
+              .toISOString()
+              .slice(0, 19)
+              .replace("T", " ")}','${hash}');`
+          );
+
+          return;
+        } else {
+          res
+            .status(401)
+            .send({ status: "failed", message: "username/email invalid" });
+          return;
+        }
+      }
+    );
+  });
+});
 app.get("/demand/insert", (req, res) => {
   const {
     crop,
@@ -130,6 +257,7 @@ app.get("/demand/search", (req, res) => {
     }
   );
 });
+
 app.get("/demand/search/id", (req, res) => {
   const { id } = JSON.parse(req.headers.data);
   if (!id) {
@@ -265,6 +393,7 @@ app.get("/demand/search/next", (req, res) => {
         status: "success",
         message: "data successfully fetched",
       });
+      return;
     }
   );
 });
@@ -360,64 +489,56 @@ app.post("/signup/farmer", (req, res) => {
     }
   );
 });
-app.get("/signin", (req, res) => {
-  // console.log(req.headers);
-  const { password, email, role } = req.headers;
-  if (!password || !email || !role) {
-    res.status(400).send({
-      status: "failed",
-      message: "Something not sent",
-    });
-    return;
+app.get("/refresh", (req, res) => {
+  const { role, id, password } = req.headers.data;
+  console.log(req.cookies);
+  const { refreshToken } = req.cookies;
+  if (!refreshToken) {
+    res.status(401).send({ message: "Invalid" });
   }
-  con.query(`select * from ${role} where email="${email}"`, (err, result) => {
-    if (result.length == 0) {
-      res
-        .status(400)
-        .send({ status: "failed", error: "username/email invalid" });
-      return;
-    }
-    bcrypt.compare(
-      req.headers.password,
-      result[0].password,
-      (error, isMatch) => {
-        if (error) {
-          res.status(505).send({
-            status: "failed",
-            message: "username/email invalid",
-          });
-          return;
-        }
+  con.query(
+    `select refreshToken from refreshLogin where id=${id} and role=${role}`,
+    (err, result) => {
+      if (err || result.length == 0) {
+        res.status(505).send({ status: "failed", message: "Invalid Login" });
+        return;
+      }
+      const unHash_token = bcrypt(
+        password,
+        result[0].refreshToken,
+        (err, isMatch) => {
+          if (err || !isMatch) {
+            res.status(400).send({ status: "failed", message: "invalid" });
+            return;
+          }
 
-        if (isMatch) {
-          const accessToken = jwt.sign(
-            JSON.stringify({
-              email: req.headers.email,
-              role: req.headers.role,
-              id:
-                req.headers.role === "farmer"
-                  ? result[0].farmerID
-                  : result[0].contractorID,
-            }),
-            jwtSecret
-          );
-          res.status(200).send({
-            accessToken,
-            id:
+          if (isMatch) {
+            const id =
               req.headers.role === "farmer"
                 ? result[0].farmerID
-                : result[0].contractorID,
-          });
-          return;
-        } else {
-          res
-            .status(401)
-            .send({ status: "failed", message: "username/email invalid" });
-          return;
+                : result[0].contractorID;
+            const accessToken = jwt.sign(
+              {
+                email: req.headers.email,
+                role: req.headers.role,
+                id:
+                  req.headers.role === "farmer"
+                    ? result[0].farmerID
+                    : result[0].contractorID,
+              },
+              jwtSecret,
+              { expiresIn: 20 }
+            );
+            res.status(200).send({
+              accessToken,
+              id,
+            });
+            return;
+          }
         }
-      }
-    );
-  });
+      );
+    }
+  );
 });
 app.get("/details", (req, res) => {
   const { id } = req.headers;
@@ -471,20 +592,16 @@ app.get("/contractor/demand", (req, res) => {
   );
 });
 app.get("/signin/verify", (req, res) => {
-  const { token } = req.headers;
-  if (!token) {
-    res.status(400).send({ error: "Invalid token" });
-    return;
-  }
-
-  try {
-    const decoded = jwt.verify(token, jwtSecret);
+  if (req.user) {
+    res.status(200).send({ status: "success", message: "verified" });
+  } else res.status(400).send({ status: "failed", message: "Auth failed" });
+});
+app.get("/signin/verify/protect", (req, res) => {
+  if (req.user) {
     res
       .status(200)
-      .send({ jwt: decoded, status: "success", message: "Authenticated" });
-  } catch (error) {
-    res.status(400).json({ status: "failed", error: "Invalid token" });
-  }
+      .send({ status: "success", message: "verified", user: req.user });
+  } else res.status(400).send({ status: "failed", message: "Auth failed" });
 });
 app.get("/update", (req, res) => {
   const data = JSON.parse(req.headers.data);

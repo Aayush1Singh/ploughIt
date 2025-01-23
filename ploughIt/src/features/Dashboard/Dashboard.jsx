@@ -4,6 +4,7 @@ import DemandsTable from "./DemandsTable";
 import axios from "axios";
 import Proposals from "./Proposals";
 import { useSelector } from "react-redux";
+import api from "../../services/axiosApi";
 
 export default function Dashboard() {
   const { role, id, email } = useSelector((state) => state.user);
@@ -15,7 +16,7 @@ export default function Dashboard() {
   }
   useEffect(() => {
     if (!id) return;
-    axios
+    api
       .get("http://localhost:3000/contractor/demand", {
         headers: { data: JSON.stringify({ id }) },
       })
@@ -23,7 +24,7 @@ export default function Dashboard() {
         updateData(response.data);
       })
       .catch((error) => console.log(error));
-    axios
+    api
       .get("http://localhost:3000/proposal/search", {
         headers: { id },
       })

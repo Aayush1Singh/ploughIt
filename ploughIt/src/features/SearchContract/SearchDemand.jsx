@@ -15,6 +15,7 @@ import supabase from "../../database/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@mui/material/Skeleton";
 import axios from "axios";
+import api from "../../services/axiosApi";
 const FlexIt = styled.div`
   width: 200px;
   justify-self: center;
@@ -86,7 +87,8 @@ async function searchAPI(
   type
 ) {
   let data = {};
-  await axios
+  console.log("hello", "yooyo");
+  await api
     .get(
       `http://localhost:3000/demand/search${type === "" ? "" : `/${type}`}`,
       {

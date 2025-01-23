@@ -41,7 +41,8 @@ function AppLayout() {
   return (
     <StyledGrid>
       <SideBar>
-        <NavLink to="/home/search">hello helo</NavLink>
+        <NavLink to="/home/search">hello helo</NavLink>{" "}
+        <NavLink to="/login">login</NavLink>
       </SideBar>
       <Header>
         <MainNav></MainNav>

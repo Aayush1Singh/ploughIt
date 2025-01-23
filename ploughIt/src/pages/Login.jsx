@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { Form, FormRow, GreenButton, Label } from "../ui/FormRow";
 import { InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { MFormControl } from "../features/makeContract/UploadDemad";
 import { logIn } from "./userSlice";
+import api from "../services/axiosApi";
 const Background = styled.div`
   width: 100%;
   height: 97vh;
@@ -23,17 +24,23 @@ function Login() {
   const { errors } = formState;
   const [role, setRole] = useState("farmer");
   const [isAuth, setAuth] = useState(false);
+  const [token, setToken] = useState(null);
   function onSubmit(data) {
     const login = async function (data) {
-      axios
+      api
         .get("http://localhost:3000/signin", {
           headers: data,
+          withCredentials: true,
         })
-        .then((response, error) => {
-          if (error) {
-            return;
-          }
+        .then((response) => {
+          console.log("hello");
+          // if (error) {
+          //   console.log("hello");
+          //   return;
+          // }
+          console.log(response);
           localStorage.setItem("jwt", response.data.accessToken);
+          setToken(response.data.accessToken);
           dispatch(
             logIn({ email: data.email, role: data.role, id: response.data.id })
           );
@@ -46,10 +53,56 @@ function Login() {
     };
     login(data);
   }
+
   function onError(err) {
     //toast validation error
     console.log(err);
   }
+  // useLayoutEffect(() => {
+  //   const authInterceptor = axios.interceptors.request.use((config) => {
+  //     config.headers.Authorization =
+  //       !config._retry && token
+  //         ? `Bearer ${token}`
+  //         : config.headers.Authorization;
+  //     return config;
+  //   });
+  //   return () => {
+  //     axios.interceptors.request.eject(authInterceptor);
+  //   };
+  // }, [token]);
+  // useLayoutEffect(() => {
+  //   const refreshInterceptor = axios.interceptors.response.use(
+  //     (response) => response,
+  //     (error) => {
+  //       const originalRequest = error.config;
+  //       console.log(error);
+  //       if (
+  //         error.response.status == 400 &&
+  //         error.response.message === "Expired"
+  //       ) {
+  //         try {
+  //           const token = axios
+  //             .get("http://localhost:3000/refresh", {
+  //               withCredentials: true,
+  //             })
+  //             .then((response) => {
+  //               console.log(response);
+  //               localStorage.setItem("jwt", response.data.accessToken);
+  //               setToken(response.data.accessToken);
+  //               navigate("/home/dashboard");
+  //             });
+  //           //generate new token
+  //         } catch (err) {
+  //           console.log(err);
+  //         }
+  //       }
+  //       return error;
+  //     }
+  //   );
+  //   return () => {
+  //     axios.interceptors.response.eject(refreshInterceptor);
+  //   };
+  // }, [token]);
   return (
     <Background>
       <Form onSubmit={handleSubmit(onSubmit, onError)}>
