@@ -13,7 +13,7 @@ const corsOption = {
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
 const verifyJwt = (req, res, next) => {
-  const nonSecurePaths = ["/signin"];
+  const nonSecurePaths = ["/signin", "/refresh"];
   if (nonSecurePaths.includes(req.path)) return next();
   const { token } = req.headers;
   console.log("hello", "lololo");
@@ -22,6 +22,7 @@ const verifyJwt = (req, res, next) => {
     res.status(400).send({ status: "failed", message: "Invalid token" });
     return;
   }
+
   try {
     const decoded = jwt.verify(token, jwtSecret);
     req.user = decoded;
@@ -111,7 +112,7 @@ app.get("/signin", async (req, res) => {
                   : result[0].contractorID,
             },
             jwtSecret,
-            { expiresIn: 5000 }
+            { expiresIn: 5 }
           );
           const refreshToken = jwt.sign(
             {
@@ -489,22 +490,35 @@ app.post("/signup/farmer", (req, res) => {
     }
   );
 });
-app.get("/refresh", (req, res) => {
-  const { role, id, password } = req.headers.data;
-  console.log(req.cookies);
+app.get("/refresh", async (req, res) => {
+  console.log("kk");
+  console.log(req.headers);
   const { refreshToken } = req.cookies;
+  // const { role, id, password } =
+  let decoded = {};
+  try {
+    decoded = await jwt.verify(refreshToken, jwtSecret);
+  } catch (error) {
+    console.log("yolo");
+    console.log(error);
+    res.status(400).send({ status: "failed", message: "ExpiredRefresh" });
+    return;
+  }
+  console.log(decoded);
+  const { id, email, role } = decoded;
   if (!refreshToken) {
     res.status(401).send({ message: "Invalid" });
   }
   con.query(
-    `select refreshToken from refreshLogin where id=${id} and role=${role}`,
+    `select refreshToken from refreshLogin where id=${id} and role='${role}'`,
     (err, result) => {
+      console.log(result);
       if (err || result.length == 0) {
         res.status(505).send({ status: "failed", message: "Invalid Login" });
         return;
       }
-      const unHash_token = bcrypt(
-        password,
+      const unHash_token = bcrypt.compare(
+        refreshToken,
         result[0].refreshToken,
         (err, isMatch) => {
           if (err || !isMatch) {
@@ -529,6 +543,7 @@ app.get("/refresh", (req, res) => {
               jwtSecret,
               { expiresIn: 20 }
             );
+            console.log("just sendin'");
             res.status(200).send({
               accessToken,
               id,
@@ -566,7 +581,7 @@ app.get("/details", (req, res) => {
     });
   } catch (err) {}
 });
-app.get("/contractor/demand", (req, res) => {
+app.get("/contractor/demand/pending", (req, res) => {
   const { data } = req.headers;
   const { id } = JSON.parse(data);
   if (!id) {
@@ -577,7 +592,32 @@ app.get("/contractor/demand", (req, res) => {
     return;
   }
   con.query(
-    `select * from demand where contractorID=${id}`,
+    `select * from demand where contractorID=${id} and status='pending';`,
+    (error, result) => {
+      if (error) {
+        res.status(505).send({
+          status: "failed",
+          message: "data could  not be fetched",
+        });
+        return;
+      }
+      res.status(200).send(result);
+      return;
+    }
+  );
+});
+app.get("/contractor/demand/partial", (req, res) => {
+  const { data } = req.headers;
+  const { id } = JSON.parse(data);
+  if (!id) {
+    res.status(400).send({
+      status: "failed",
+      message: "data invalid",
+    });
+    return;
+  }
+  con.query(
+    `select * from demand where contractorID=${id} and status='partial';`,
     (error, result) => {
       if (error) {
         res.status(505).send({
@@ -637,6 +677,10 @@ app.get("/update", (req, res) => {
 });
 app.get("/proposal/insert", (req, res) => {
   const data = JSON.parse(req.headers.data);
+  console.log(data);
+  // con.query(
+  //   `delete from proposal where farmerID=${data.farmerID} and demandID=${data.demandID}`
+  // );
   con.query(
     `insert into proposal(${Object.entries(data)
       .map((object) => object[0])
@@ -669,6 +713,64 @@ app.get("/proposal/search", (req, res) => {
 app.listen(3000, (err) => {
   console.log("Server Started");
 });
+app.get("/proposal/:demandID", (req, res) => {
+  // console.log(req);
+  console.log(req.params);
+  console.log(`select * from proposals where demandID=${req.params.demandID}`);
+  con.query(
+    `select * from proposal where demandID=${req.params.demandID};`,
+    (err, result) => {
+      if (err) {
+        console.log("hello");
+        res.send({ status: 505, message: "data could not be fetched" });
+        return;
+      }
+      console.log(result);
+      res.send({ result, status: 200, message: "data successfully fetched" });
+    }
+  );
+});
+app.get("/proposal/accepted/:demandID", (req, res) => {
+  console.log(req.headers);
+  const {
+    demandID,
+    farmerID,
+    price,
+    description: farmerDesc,
+    duration,
+  } = JSON.parse(req.headers.proposal);
+  farmerDesc = "FarmerDescription: " + farmerDesc;
+  try {
+    con.query(
+      `update proposal set status=CASE
+     when demandID=${demandID} and farmerID=${farmerID} then 'AC'
+     when demandID=${demandID} then 'R'
+     end where demandID=${demandID};`
+    );
+    console.log(`update demand set price=${price},
+     duration=${duration},
+     description=concat(description,farmerDesc),
+     contractor_approval=true 
+     where demandID=${demandID};`);
+    con.query(
+      `update demand set price=${price},
+     duration=${duration},
+     description=concat(description,'${farmerDesc}'),
+     contractor_approval=true,
+     status='partial'
+     where auto_id=${demandID};`
+    );
+  } catch (err) {
+    console.log(err);
+    res.status(505).send({
+      status: "failed",
+      message: "internal server error updates could not take place",
+    });
+    return;
+  }
+  res.status(200).send({ status: "success", message: "updates done" });
+});
+app.get("/makeContract", (req, res) => {});
 /*
 {
 "crop":  "wheat",
