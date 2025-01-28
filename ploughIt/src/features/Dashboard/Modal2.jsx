@@ -108,11 +108,11 @@ export function Modal2({ id, heading, actionName, children, setIsOpen }) {
           // !event.target.closest(".modal") ||
           !document.querySelector(".modal")?.contains(event.target)
         ) {
-          console.log(
-            event.target,
-            document.querySelector(".modal")?.contains(event.target),
-            "kkkkkkkkkkkkkkkkkkkkkkkkkk"
-          );
+          // console.log(
+          //   event.target,
+          //   document.querySelector(".modal")?.contains(event.target),
+          //   "kkkkkkkkkkkkkkkkkkkkkkkkkk"
+          // );
           setIsOpen(false);
         }
       },

@@ -4,6 +4,7 @@ import styled, { css } from "styled-components";
 import { Button } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
+import api from "../services/axiosApi";
 const BackGroundTemp = styled.div`
   position: absolute;
   z-index: 1000;
@@ -164,7 +165,7 @@ export function Modal({ data: details, setIsOpen }) {
       demandID: details.auto_id,
     };
     console.log(errors);
-    axios.get("http://localhost:3000/proposal", {
+    api.get("http://localhost:3000/proposal/insert", {
       headers: { data: JSON.stringify(data) },
     });
   }

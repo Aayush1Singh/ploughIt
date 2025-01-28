@@ -5,6 +5,7 @@ import Modal2, { FlexIt, MainHead, SecondMainHead } from "./Modal2";
 import { TextField } from "@mui/material";
 import axios from "axios";
 import { ContentRow } from "../../ui/Modal";
+import api from "../../services/axiosApi";
 const StyledTableRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 3fr 1fr;
@@ -31,16 +32,17 @@ function TableRow({ data }) {
   const [orginalDuration, setOrigianalDuration] = useState(0);
   useEffect(() => {
     if (isOpen) {
-      axios
+      api
         .get(`http://localhost:3000/demand/search/id`, {
           headers: { data: JSON.stringify({ id: data.demandID }) },
         })
         .then((response) => {
-          const { price, duration, description } = response.data[0];
+          console.log(response);
+          const { price, duration, description } = response.data.result[0];
           setOrigianalPrice(price);
           setOrigianalDuration(duration);
           setOrigianalDescription(description);
-          setOriginalData(response.data[0]);
+          setOriginalData(response.data.result[0]);
         });
     }
   }, [isOpen]);

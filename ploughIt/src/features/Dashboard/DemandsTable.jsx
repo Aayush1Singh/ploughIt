@@ -2,7 +2,8 @@ import { useState, createPortal } from "react";
 import styled, { css } from "styled-components";
 import UpdateDemand from "./UpdateDemand";
 import Modal2, { FlexIt } from "./Modal2";
-const StyledTableRow = styled.div`
+import { Link, NavLink } from "react-router-dom";
+export const StyledTableRow = styled.div`
   width: 100%;
 
   min-width: 4rem;
@@ -60,6 +61,7 @@ export const Table = styled.div`
     border-top: 0;
   }
 `;
+const dat = { naem: "singh" };
 export const StyledButton = styled.button`
   background-color: transparent;
   box-shadow: 0px;
@@ -93,7 +95,7 @@ export const StyledButton = styled.button`
     );
   }};
 `;
-function TableRow({ data, contractorID }) {
+export function TableRow({ data, contractorID, children }) {
   const [display, setDisplay] = useState(false);
   const [update, setUpdate] = useState(false);
   return (
@@ -133,7 +135,7 @@ function TableRow({ data, contractorID }) {
           <UpdateDemand data={data} id={contractorID}></UpdateDemand>
         </Modal2>
       )}
-      {display && <div>description: ${data.description}</div>}
+      {display && children && <div>description: {children}</div>}
     </>
   );
 }
@@ -153,12 +155,24 @@ function DemandsTable({ data, contractorID }) {
       ></TableRow>
       {data &&
         data?.map((item) => {
+          console.log(item);
           return (
             <TableRow
               key={item.auto_id}
               data={item}
               contractorID={contractorID}
-            ></TableRow>
+            >
+              {" "}
+              <NavLink
+                to={{
+                  pathname: `/home/dashboard/${item.auto_id}`,
+                }}
+                state={item}
+                key={item.auto_id}
+              >
+                link to
+              </NavLink>
+            </TableRow>
           );
         })}
     </Table>

@@ -17,7 +17,8 @@ export const ProtectRoutes = ({ children }) => {
         .then((response) => {
           console.log(response);
           if (response.data.message === "verified") {
-            dispatch(logIn(response.data.user));
+            console.log(response.data.user);
+            // dispatch(logIn(response.data.user));
             setIsAuth(true);
           } else {
             setIsAuth(false);

@@ -16,7 +16,7 @@ export const userDetails = createSlice({
       return state;
     },
     logOut: (state, action) => {
-      return {};
+      return initialState;
     },
     updateUser: (state, action) => {},
   },

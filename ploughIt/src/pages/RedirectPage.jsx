@@ -1,28 +1,32 @@
 import axios from "axios";
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/axiosApi";
 
 function RedirectPage() {
   const navigate = useNavigate();
   console.log(localStorage.getItem("jwt"));
-  axios
-    .get("http://localhost:3000/signin/verify", {
-      headers: { token: localStorage.getItem("jwt") },
-    })
-    .then((response) => {
-      console.log(response);
-      if (response.data) {
+  const a = async function () {
+    await api
+      .get("http://localhost:3000/signin/verify/protect", {
+        headers: { token: localStorage.getItem("jwt") },
+      })
+      .then((response) => {
         console.log(response);
-        navigate("/home/dashboard");
-      } else {
-        console.log(response.data, "kkk");
+        if (response.data) {
+          console.log(response);
+          navigate("/home/dashboard");
+        } else {
+          console.log(response.data, "kkk");
+          navigate("/login");
+        }
+      })
+      .catch((err) => {
         navigate("/login");
-      }
-    })
-    .catch((err) => {
-      navigate("/login");
-      console.log(err);
-    });
+        console.log(err);
+      });
+  };
+  a();
   return null;
 }
 

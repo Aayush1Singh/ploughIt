@@ -5,6 +5,7 @@ import { InputLabel, MenuItem, TextField } from "@mui/material";
 import { MFormControl, MSlider } from "../makeContract/UploadDemad";
 import styled from "styled-components";
 import axios from "axios";
+import api from "../../services/axiosApi";
 /*price quantity description preference duration */
 const Select = styled.select`
   height: 3rem;
@@ -14,7 +15,7 @@ const Select = styled.select`
 const StyledForm = styled(Form)`
   gap: 2rem;
 `;
-function UpdateDemand({ data, id }) {
+function UpdateDemand({ data, id, updateTempData }) {
   const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
 
@@ -26,7 +27,8 @@ function UpdateDemand({ data, id }) {
     data2.variety = data.variety;
     data2.contractorID = id;
     console.log({ ...data, ...data2 });
-    axios
+    if (updateTempData) updateTempData({ ...data, ...data2 });
+    api
       .get("http://localhost:3000/update", {
         headers: { data: JSON.stringify({ ...data, ...data2 }) },
       })
