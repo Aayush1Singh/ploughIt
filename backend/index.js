@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mysql from "mysql";
 import cookieParser from "cookie-parser";
+import { maker, contractAddress } from "../crypto/scripts/deploy.js";
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
@@ -13,7 +14,7 @@ const corsOption = {
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
 const verifyJwt = (req, res, next) => {
-  const nonSecurePaths = ["/signin", "/refresh"];
+  const nonSecurePaths = ["/signin", "/refresh", "/signup/farmer"];
   if (nonSecurePaths.includes(req.path)) return next();
   const { token } = req.headers;
   console.log("hello", "lololo");
@@ -581,7 +582,7 @@ app.get("/details", (req, res) => {
     });
   } catch (err) {}
 });
-app.get("/contractor/demand/pending", (req, res) => {
+app.get("/:role/demand/pending", (req, res) => {
   const { data } = req.headers;
   const { id } = JSON.parse(data);
   if (!id) {
@@ -592,7 +593,7 @@ app.get("/contractor/demand/pending", (req, res) => {
     return;
   }
   con.query(
-    `select * from demand where contractorID=${id} and status='pending';`,
+    `select * from demand where ${req.params.role}ID=${id} and status='pending';`,
     (error, result) => {
       if (error) {
         res.status(505).send({
@@ -606,7 +607,34 @@ app.get("/contractor/demand/pending", (req, res) => {
     }
   );
 });
-app.get("/contractor/demand/partial", (req, res) => {
+app.get("/farmer/demand/pending", (req, res) => {
+  const { data } = req.headers;
+  const { id } = JSON.parse(data);
+  console.log("hello");
+  if (!id) {
+    res.status(400).send({
+      status: "failed",
+      message: "data invalid",
+    });
+    return;
+  }
+  con.query(
+    `select * from demand where farmerID=${id} and status='pending';`,
+    (error, result) => {
+      if (error) {
+        res.status(505).send({
+          status: "failed",
+          message: "data could  not be fetched",
+        });
+        return;
+      }
+      console.log(result);
+      res.status(200).send(result);
+      return;
+    }
+  );
+});
+app.get("/:role/demand/partial", (req, res) => {
   const { data } = req.headers;
   const { id } = JSON.parse(data);
   if (!id) {
@@ -617,7 +645,7 @@ app.get("/contractor/demand/partial", (req, res) => {
     return;
   }
   con.query(
-    `select * from demand where contractorID=${id} and status='partial';`,
+    `select * from demand where ${req.params.role}ID=${id} and status='partial';`,
     (error, result) => {
       if (error) {
         res.status(505).send({
@@ -712,6 +740,7 @@ app.get("/proposal/search", (req, res) => {
 });
 app.listen(3000, (err) => {
   console.log("Server Started");
+  console.log(`Smart contract is deployed at: ${contractAddress}`);
 });
 app.get("/proposal/:demandID", (req, res) => {
   // console.log(req);
@@ -770,7 +799,11 @@ app.get("/proposal/accepted/:demandID", (req, res) => {
   }
   res.status(200).send({ status: "success", message: "updates done" });
 });
-app.get("/makeContract", (req, res) => {});
+app.get("/makeContract", (req, res) => {
+  console.log(req.headers);
+
+  maker();
+});
 /*
 {
 "crop":  "wheat",
