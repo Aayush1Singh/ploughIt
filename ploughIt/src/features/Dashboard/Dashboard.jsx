@@ -14,9 +14,10 @@ function PartialTableRow({ data, contractorID, children }) {
   const [display, setDisplay] = useState(false);
   const [isModal, setIsModal] = useState(false);
   const { role, id } = useSelector((state) => state.user);
+
   return (
     <>
-      <StyledTableRow onClick={(e) => setDisplay((display) => !display)}>
+      <StyledTableRow onClick={(e) => setIsModal((isModal) => !isModal)}>
         <p>{data.auto_id}</p>
         <p>{data.crop}</p>
         <p>{data.variety}</p>
@@ -91,7 +92,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!id) return;
     api
-      .get("http://localhost:3000/contractor/demand/pending", {
+      .get(`http://localhost:3000/${role}/demand/pending`, {
         headers: { data: JSON.stringify({ id }) },
       })
       .then((response) => {
@@ -99,7 +100,7 @@ export default function Dashboard() {
       })
       .catch((error) => console.log(error));
     api
-      .get("http://localhost:3000/contractor/demand/partial", {
+      .get(`http://localhost:3000/${role}/demand/partial`, {
         headers: { data: JSON.stringify({ id }) },
       })
       .then((response) => {
