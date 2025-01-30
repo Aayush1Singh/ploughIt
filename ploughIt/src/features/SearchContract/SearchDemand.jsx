@@ -182,6 +182,7 @@ function SearchDemand() {
             onChange={(e) => {
               setQuantity((quantity) => e.target.value);
             }}
+            max={1000}
             valueLabelDisplay="auto"
           />
         </div>

@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mysql from "mysql";
 import cookieParser from "cookie-parser";
-import { maker, contractAddress } from "../crypto/scripts/deploy.js";
+import { maker, deployContract, getContract } from "./scripts/deploy.cjs";
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
@@ -362,6 +362,17 @@ app.get("/demand/search/next", (req, res) => {
     });
     return;
   }
+  console.log(
+    `select * from demand where quantity between ${quantity[0]} and ${
+      quantity[1]
+    } and duration between ${duration[0]} and ${duration[1]} ${
+      preference === "" ? "" : `and preference like "${preference}"`
+    } and price>=${price} ${
+      crop.length > 0 ? `and crop in ("${crop.join(`","`)}")` : ""
+    } ${
+      variety.length > 0 ? `and variety in ("${variety.join(`","`)}")` : ""
+    } and auto_id>${cursors.next} order by auto_id limit ${PAGE_SIZE + 1};`
+  );
   con.query(
     `select * from demand where quantity between ${quantity[0]} and ${
       quantity[1]
@@ -740,7 +751,7 @@ app.get("/proposal/search", (req, res) => {
 });
 app.listen(3000, (err) => {
   console.log("Server Started");
-  console.log(`Smart contract is deployed at: ${contractAddress}`);
+  // console.log(`Smart contract is deployed at: ${contractAddress}`);
 });
 app.get("/proposal/:demandID", (req, res) => {
   // console.log(req);
@@ -760,8 +771,8 @@ app.get("/proposal/:demandID", (req, res) => {
   );
 });
 app.get("/proposal/accepted/:demandID", (req, res) => {
-  console.log(req.headers);
-  const {
+  console.log(req.headers, "kkkkkkkkkkkkkkkkkkkkkk");
+  let {
     demandID,
     farmerID,
     price,
@@ -799,11 +810,43 @@ app.get("/proposal/accepted/:demandID", (req, res) => {
   }
   res.status(200).send({ status: "success", message: "updates done" });
 });
-app.get("/makeContract", (req, res) => {
-  console.log(req.headers);
-
-  maker();
+await deployContract();
+let arr = [1, 2];
+app.get("/makeContract", async (req, res) => {
+  console.log("hello");
+  const {
+    quantity,
+    variety,
+    crop,
+    preference,
+    duration,
+    price,
+    auto_id,
+    contractorID,
+    farmerID,
+  } = JSON.parse(req.headers.demand);
+  console.log(
+    "hellokkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
+  );
+  await maker(
+    auto_id,
+    contractorID,
+    farmerID,
+    crop,
+    variety,
+    quantity,
+    price,
+    duration
+  );
+  arr.push(auto_id);
+  for (let i = 0; i < arr.length; i++) {
+    console.log(await getContract(arr[i]));
+  }
+  res.send("ok");
 });
+for (let i = 0; i < arr.length; i++) {
+  console.log(await getContract(arr[i]));
+}
 /*
 {
 "crop":  "wheat",

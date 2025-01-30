@@ -14,6 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import supabase from "../../database/supabase";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import api from "../../services/axiosApi";
 export const MSlider = styled(Slider)`
   margin-left: 10rem;
   color: green;
@@ -24,7 +25,7 @@ export const MFormControl = styled(FormControl)`
 async function uploadDemand(data) {
   console.log("heelo2");
   console.log(data);
-  axios
+  api
     .get("http://localhost:3000/demand/insert", { headers: data })
     .then((response) => {
       console.log(response.data);
