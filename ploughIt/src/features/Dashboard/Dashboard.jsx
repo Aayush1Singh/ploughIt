@@ -1,127 +1,128 @@
-import { useEffect, useState } from "react";
-import useUserRole from "../../services/getUserRole";
-import DemandsTable, {
-  StyledButton,
-  StyledTableRow,
-  Table,
-} from "./DemandsTable";
-import axios from "axios";
-import Proposals from "./Proposals";
+import { useEffect, useMemo, useState } from "react";
+import DemandsTable, { StyledButton, StyledTableRow } from "./DemandsTable";
 import { useSelector } from "react-redux";
 import api from "../../services/axiosApi";
 import Modal2 from "./Modal2";
-function PartialTableRow({ data, contractorID, children }) {
-  const [display, setDisplay] = useState(false);
-  const [isModal, setIsModal] = useState(false);
-  const { role, id } = useSelector((state) => state.user);
-
-  return (
-    <>
-      <StyledTableRow onClick={(e) => setIsModal((isModal) => !isModal)}>
-        <p>{data.auto_id}</p>
-        <p>{data.crop}</p>
-        <p>{data.variety}</p>
-        <p>{data.quantity}</p>
-        <p>{data.preference}</p>
-        <p>{data.duration}</p>
-        <p>{data.farmer_approval}</p>
-        <p>{data.contractor_approval}</p>
-      </StyledTableRow>
-      {isModal && (
-        <Modal2 setIsOpen={setIsModal}>
-          <div>
-            {data[`${role}_approval`] ? (
-              "You have already approvesd"
-            ) : (
-              <StyledButton
-                variation="accept"
-                onClick={() => {
-                  data[`${role}ID`] = id;
-                  api.get("http://localhost:3000/makeContract", {
-                    headers: { demand: JSON.stringify(data) },
-                  });
-                }}
-              >
-                Approve
-              </StyledButton>
-            )}
-          </div>
-        </Modal2>
-      )}
-    </>
-  );
-}
-function PartialTable({ data, contractorID }) {
-  return (
-    <Table>
-      <PartialTableRow
-        data={{
-          auto_id: "ID",
-          variety: "Variety",
-          crop: "Crop",
-          quantity: "Quantity",
-          preference: "Preference",
-          duration: "Duration",
-          farmer_approval: "farmer_approval",
-          contractor_approval: "contractor_approval",
-        }}
-      ></PartialTableRow>
-      {data &&
-        data?.map((item) => {
-          console.log(item);
-          return (
-            <PartialTableRow
-              key={item.auto_id}
-              data={item}
-              contractorID={contractorID}
-            ></PartialTableRow>
-          );
-        })}
-    </Table>
-  );
-}
+import { PartialTable2 } from "./PartialTable";
+import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import OngoingDemands from "./OngoingDemands";
+import { Visual } from "./Visual";
+import ProposalsTable from "./ProposalsTable";
 export default function Dashboard() {
   const { role, id, email } = useSelector((state) => state.user);
   const user = useSelector((state) => state.user);
   const [data, setData] = useState([]);
-  const [proposalData, setProposalData] = useState([]);
   const [partialData, setPartialData] = useState([]);
-  function updateData(data1) {
-    setData((data) => data1);
+  const [ongoingData, setOngoingData] = useState([]);
+  const [proposalData, setProposalData] = useState([]);
+  async function demandFn() {
+    const data = await api.get(`http://localhost:3000/${role}/demand/pending`, {
+      headers: { data: JSON.stringify({ id }) },
+    });
+    return data;
   }
+  async function partialDemands() {
+    const data = await api.get(`http://localhost:3000/${role}/demand/partial`, {
+      headers: { data: JSON.stringify({ id }) },
+    });
+    return data;
+  }
+  async function proposals() {
+    const data = await api.get(`http://localhost:3000/${role}/proposals`, {
+      headers: { data: JSON.stringify({ id }) },
+    });
+    return data;
+  }
+  const { data: resultPartialDemands, isLoading: loaderPartial } = useQuery({
+    queryFn: partialDemands,
+    queryKey: ["partial", { id, role }],
+    staleTime: Infinity,
+  });
+  const { data: resultPendingDemands, isLoading: loaderDemands } = useQuery({
+    queryFn: demandFn,
+    queryKey: ["demands", { id, role }],
+    staleTime: Infinity,
+  });
+  const { data: resultProposalsData, isLoading: loaderProposals } = useQuery({
+    queryFn: proposals,
+    queryKey: ["proposals", { id, role }],
+    staleTime: Infinity,
+  });
   useEffect(() => {
-    if (!id) return;
-    api
-      .get(`http://localhost:3000/${role}/demand/pending`, {
-        headers: { data: JSON.stringify({ id }) },
-      })
-      .then((response) => {
-        updateData(response.data);
-      })
-      .catch((error) => console.log(error));
-    api
-      .get(`http://localhost:3000/${role}/demand/partial`, {
-        headers: { data: JSON.stringify({ id }) },
-      })
-      .then((response) => {
-        setPartialData(response.data);
-        console.log(response.data);
-      })
-      .catch((error) => console.log(error));
-    api
-      .get("http://localhost:3000/proposal/search", {
-        headers: { id },
-      })
-      .then((response) => {
-        setProposalData(response.data.result);
-      })
-      .catch((err) => console.log(err));
-  }, []);
+    console.log(resultProposalsData);
+    if (resultProposalsData instanceof Error) {
+      toast.error(resultProposalsData.message);
+    } else {
+      console.log(resultProposalsData);
+      setProposalData(resultProposalsData?.data?.result);
+    }
+  }, [resultProposalsData, loaderProposals]);
+  useEffect(() => {
+    if (resultPendingDemands instanceof Error) {
+      toast.error(resultPendingDemands.message);
+    } else {
+      setData(resultPendingDemands?.data);
+    }
+  }, [resultPendingDemands, loaderDemands]);
+  useEffect(() => {
+    console.log(resultPartialDemands);
+    if (resultPartialDemands instanceof Error) {
+      toast.error(resultPartialDemands.message);
+    } else {
+      setPartialData(resultPartialDemands?.data);
+    }
+  }, [resultPartialDemands, loaderPartial]);
+  const pendingValue = useMemo(
+    () =>
+      data?.length > 0
+        ? data.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        : 0,
+    [data],
+  );
+  const partialValue = useMemo(
+    () =>
+      partialData?.length > 0
+        ? partialData.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        : 0,
+    [partialData],
+  );
+  const ongoingValue = useMemo(
+    () =>
+      ongoingData?.length > 0
+        ? ongoingData.reduce((acc, item) => acc + item.price * item.quantity, 0)
+        : 0,
+    [ongoingData],
+  );
+  const pieData = useMemo(() => {
+    console.log(pendingValue);
+    return [
+      { name: "Pending", value: pendingValue },
+      { name: "Partial", value: partialValue },
+      { name: "Ongoing", value: ongoingValue },
+    ];
+  }, [pendingValue, partialValue, ongoingValue]);
+  //   api
+  //     .get("http://localhost:3000/proposal/search", {
+  //       headers: { id },
+  //     })
+  //     .then((response) => {
+  //       setProposalData(response.data.result);
+  //     })
+  //     .catch((err) => console.log(err));
   return (
-    <>
-      <DemandsTable data={data} contractorID={id}></DemandsTable>
-      <Proposals data={proposalData}></Proposals>
-      <PartialTable data={partialData}></PartialTable>
-    </>
+    <div className="to-white-100 grid h-full grid-cols-2 grid-rows-2 items-center justify-between gap-3">
+      {role == "contractor" && (
+        <DemandsTable rows={data} contractorID={id}></DemandsTable>
+      )}
+      {role == "farmer" && (
+        <ProposalsTable rows={proposalData}></ProposalsTable>
+      )}
+      <Visual data={pieData}></Visual>
+      {partialData && (
+        <PartialTable2 rows={partialData} className=""></PartialTable2>
+      )}
+      <OngoingDemands></OngoingDemands>
+    </div>
   );
 }

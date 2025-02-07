@@ -41,7 +41,7 @@ export const Label = styled.label`
 export function FormRow({ children, content, height }) {
   return (
     <StyledFormRow style={{ height: `${height}rem` }}>
-      <Label>{content}</Label>
+      <Label className="text-lime-700">{content}</Label>
       {children}
     </StyledFormRow>
   );

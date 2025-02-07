@@ -10,6 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { MFormControl } from "../features/makeContract/UploadDemad";
 import { logIn } from "./userSlice";
 import api from "../services/axiosApi";
+import Loader from "../ui/Loader";
+import toast from "react-hot-toast";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 const Background = styled.div`
   width: 100%;
   height: 97vh;
@@ -17,97 +20,94 @@ const Background = styled.div`
   align-items: center;
   justify-content: center;
 `;
+
 function Login() {
   const dispatch = useDispatch();
+  const QueryClient = useQueryClient();
   const { register, formState, handleSubmit } = useForm();
   const navigate = useNavigate();
   const { errors } = formState;
   const [role, setRole] = useState("farmer");
   const [isAuth, setAuth] = useState(false);
   const [token, setToken] = useState(null);
+  const [formData, setFormData] = useState({});
+  const login = async function ({ queryKey }) {
+    const data = queryKey[1];
+    const data1 = await api.get("http://localhost:3000/signin", {
+      headers: data,
+      withCredentials: true,
+    });
+    console.log(data1);
+    return data1;
+  };
+  const {
+    data: result,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryFn: login,
+    queryKey: ["login", formData],
+    enabled: !!formData.email,
+    onSuccess: (data) => {
+      console.log(data);
+      localStorage.setItem("jwt", data.accessToken);
+      setToken(data.accessToken);
+      dispatch(logIn({ email: data.email, role: data.role, id: data.id }));
+      navigate("/home/dashboard");
+      toast.success("Logged In Successfully");
+    },
+    staleTime: Infinity,
+  });
   function onSubmit(data) {
-    const login = async function (data) {
-      api
-        .get("http://localhost:3000/signin", {
-          headers: data,
-          withCredentials: true,
-        })
-        .then((response) => {
-          console.log("hello");
-          // if (error) {
-          //   console.log("hello");
-          //   return;
-          // }
-          console.log(response);
-          localStorage.setItem("jwt", response.data.accessToken);
-          setToken(response.data.accessToken);
-          dispatch(
-            logIn({ email: data.email, role: data.role, id: response.data.id })
-          );
-          navigate("/home/dashboard");
-        })
-        .catch((error) => {
-          //toast failed login  error msg
-          console.log(error);
-        });
-    };
-    login(data);
+    console.log(data);
+    const queryState = QueryClient.getQueryState(["login", data]);
+    if (
+      queryState?.data &&
+      queryState.data instanceof Error &&
+      queryState.data.message != "Network Error"
+    ) {
+      toast.error(queryState.data.message);
+      return;
+    } else {
+      if (JSON.stringify(data) === JSON.stringify(formData)) {
+        QueryClient.invalidateQueries({ queryKey: ["login", data] });
+      } else setFormData(data);
+    }
   }
-
   function onError(err) {
     //toast validation error
-    console.log(err);
+    Object.entries(err).map((error) => toast.error(error[1].message));
   }
-  // useLayoutEffect(() => {
-  //   const authInterceptor = axios.interceptors.request.use((config) => {
-  //     config.headers.Authorization =
-  //       !config._retry && token
-  //         ? `Bearer ${token}`
-  //         : config.headers.Authorization;
-  //     return config;
-  //   });
-  //   return () => {
-  //     axios.interceptors.request.eject(authInterceptor);
-  //   };
-  // }, [token]);
-  // useLayoutEffect(() => {
-  //   const refreshInterceptor = axios.interceptors.response.use(
-  //     (response) => response,
-  //     (error) => {
-  //       const originalRequest = error.config;
-  //       console.log(error);
-  //       if (
-  //         error.response.status == 400 &&
-  //         error.response.message === "Expired"
-  //       ) {
-  //         try {
-  //           const token = axios
-  //             .get("http://localhost:3000/refresh", {
-  //               withCredentials: true,
-  //             })
-  //             .then((response) => {
-  //               console.log(response);
-  //               localStorage.setItem("jwt", response.data.accessToken);
-  //               setToken(response.data.accessToken);
-  //               navigate("/home/dashboard");
-  //             });
-  //           //generate new token
-  //         } catch (err) {
-  //           console.log(err);
-  //         }
-  //       }
-  //       return error;
-  //     }
-  //   );
-  //   return () => {
-  //     axios.interceptors.response.eject(refreshInterceptor);
-  //   };
-  // }, [token]);
+  useEffect(() => {
+    if (!result) return;
+    console.log("hello");
+    const { data, status } = result;
+    if (!data) {
+      console.log("k");
+      toast.error("UserName/password invalid");
+    } else if (status == 200) {
+      console.log(data);
+      localStorage.setItem("jwt", data.accessToken);
+      setToken(data.accessToken);
+      dispatch(
+        logIn({ email: formData.email, role: formData.role, id: data.id }),
+      );
+      navigate("/home/dashboard");
+      toast.success("Logged In Successfully");
+    } else {
+      toast.error(data?.message);
+    }
+  }, [dispatch, navigate, result, isLoading]);
   return (
-    <Background>
-      <Form onSubmit={handleSubmit(onSubmit, onError)}>
+    <Background className="login-background">
+      {/* <Loader></Loader> */}
+      <Form
+        onSubmit={handleSubmit(onSubmit, onError)}
+        className="overlay-login-form p-8"
+      >
         <FormRow content={"Username/Email"}>
           <TextField
+            className="focus: border-red focus:ring-2 focus:outline-none"
             id="username"
             label={"Username/Email"}
             variant="outlined"
@@ -121,7 +121,7 @@ function Login() {
             helperText={errors?.email?.message}
           />
         </FormRow>
-        <FormRow content={"Password"}>
+        <FormRow content={"Password"} className="">
           {" "}
           <TextField
             id="password"

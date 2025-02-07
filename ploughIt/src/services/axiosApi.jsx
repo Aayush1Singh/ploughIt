@@ -1,4 +1,5 @@
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const api = axios.create({
   // baseURL: "http://localhost:3000", // Replace with your backend URL
@@ -7,15 +8,8 @@ const api = axios.create({
 
 // Request Interceptor for attaching token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("jwt"); // Or use a state management solution
-
-  console.log("hello");
+  const token = localStorage.getItem("jwt");
   config.headers.token = token;
-  // if (token && !config._retry) {
-  //   config.headers.token = token;
-  //   config._retry = true;
-  // }
-
   return config;
 });
 
@@ -55,23 +49,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.log("hello");
+    if (error.message == "Network Error") {
+      toast.error("Server is currently down");
+    }
     const originalRequest = error.config;
-    console.log(error);
-    console.log(
-      error.response,
-      error.response.status,
-      error.response.data?.message,
-      originalRequest._retry
-    );
+
     if (
       error.response &&
       error.response.status === 400 &&
       error.response.data.message === "Expired" &&
       !originalRequest._retry
     ) {
-      // error.config._retry = true;
-
       console.log("expired received");
       try {
         console.log("hello");
@@ -81,20 +69,18 @@ api.interceptors.response.use(
           })
           .then((response) => {
             console.log(response.data);
-
             if (response.data.accessToken) {
               localStorage.setItem("jwt", response.data.accessToken);
-              console.log("resending req");
               return api(originalRequest);
             }
           });
         return response;
-        //generate new token
       } catch (err) {
-        console.log(err);
+        toast.error("User not authenticated");
+        return err;
       }
     }
     return error;
-  }
+  },
 );
 export default api;

@@ -5,6 +5,8 @@ import { Button } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import api from "../services/axiosApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 const BackGroundTemp = styled.div`
   position: absolute;
   z-index: 1000;
@@ -70,6 +72,7 @@ export const ThirdMainHead = styled.p`
 export const MainHead = styled.p`
   font-size: 80px;
   margin: 0 0;
+  line-height: 1;
 `;
 export const FlexIt = styled.div`
   display: flex;
@@ -137,9 +140,27 @@ export function Modal({ data: details, setIsOpen }) {
           setIsOpen(false);
         }
       },
-      true
+      true,
     );
   });
+  async function proposalInsert(data) {
+    console.log("gay");
+    const res = await api.get("http://localhost:3000/proposal/insert", {
+      headers: { data: JSON.stringify(data) },
+    });
+    if (res instanceof Error) {
+      toast.error("could not send proposal");
+    } else {
+      toast.success("proposal sent");
+      setIsOpen(false);
+      queryClient.invalidateQueries(["proposals", { id, role }]);
+    }
+    return res;
+  }
+  const { mutate, isLoading } = useMutation({
+    mutationFn: proposalInsert,
+  });
+
   // const { result: details } = axios.get("http://localhost:3000/details", {
   //   headers: { id },
   // });
@@ -152,10 +173,11 @@ export function Modal({ data: details, setIsOpen }) {
   //   location: "Delhi",
   //   preference: "organic",
   // };
-  const id = useSelector((state) => state.user.id);
+  const { id, role } = useSelector((state) => state.user);
   const { register, handleSubmit, formState } = useForm();
   const { errors } = formState;
-  function onSubmit(data) {
+  const queryClient = useQueryClient();
+  async function onSubmit(data) {
     console.log(data);
     console.log(id);
     data = {
@@ -164,10 +186,18 @@ export function Modal({ data: details, setIsOpen }) {
       contractorID: details.contractorID,
       demandID: details.auto_id,
     };
+    mutate(data);
     console.log(errors);
-    api.get("http://localhost:3000/proposal/insert", {
-      headers: { data: JSON.stringify(data) },
-    });
+    // const res = await api.get("http://localhost:3000/proposal/insert", {
+    //   headers: { data: JSON.stringify(data) },
+    // });
+    // if (res instanceof Error) {
+    //   toast.error("could not send proposal");
+    // } else {
+    //   toast.success("proposal sent");
+    //   setIsOpen(false);
+    //   queryClient.invalidateQueries(["proposals", { id, role }]);
+    // }
   }
   function onError(err) {
     console.log(err);

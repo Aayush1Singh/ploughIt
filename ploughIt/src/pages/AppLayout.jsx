@@ -2,6 +2,7 @@ import Button from "@mui/material/Button";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import styled from "styled-components";
 import MainNav from "../ui/MainNav";
+import SideBarNav from "./SideBarNav";
 const StyledButton = styled(Button)`
   &.MuiButton-root {
     background-color: black;
@@ -14,37 +15,46 @@ const StyledButton = styled(Button)`
 `;
 const StyledGrid = styled.div`
   display: grid;
-  grid-template-columns: 0.2fr 1fr;
+  box-sizing: border-box;
+  grid-template-columns: 0.1fr 1fr;
   grid-template-rows: 5rem 1fr;
-  height: 100dvh;
-  overflow: hidden;
+  height: 100vh;
   margin: 0 0;
-  padding: 10px;
+  padding: 0 0;
+  padding: 4px;
+
+  /* border: 1px solid red; */
 `;
 const Header = styled.div`
   grid-column: 2;
   grid-row: 1;
   display: flex;
-  width: 100%;
   justify-content: right;
-  margin: 0 0.5rem;
 `;
 const Body = styled.div`
+  padding-left: 5px;
+  padding-top: 5px;
   grid-column: 2;
   grid-row: 2;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
 `;
 const SideBar = styled.div`
   grid-row: 1/-1;
   grid-column: 1;
+  display: flex;
+  align-items: center;
 `;
 function AppLayout() {
   return (
     <StyledGrid>
-      <SideBar>
-        <NavLink to="/home/search">hello helo</NavLink>{" "}
-        <NavLink to="/login">login</NavLink>
+      <SideBar className="item-center flex bg-gradient-to-b from-green-300 to-white">
+        <SideBarNav></SideBarNav>
+        {/* <NavLink to="/home/search">Search</NavLink>
+        <NavLink to="/login">login</NavLink> */}
       </SideBar>
-      <Header>
+      <Header className="bg-gradient-to-r from-green-300 to-white">
         <MainNav></MainNav>
       </Header>
       <Body>

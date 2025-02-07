@@ -1,0 +1,30 @@
+@import "tailwindcss";
+html,
+body {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+.login-background {
+  background-image: radial-gradient(Transparent, var(--color-green-400) 400%),
+    url("../public/login-background.webp");
+  background-size: cover;
+}
+.overlay-login-form {
+  /* background-image:radial-gradient(); */
+
+  backdrop-filter: blur(2px);
+  border-radius: 15px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); /* Subtle glow */
+  padding: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.active {
+  background-color: var(--color-green-600);
+  position: relative;
+}
+.active::after {
+  content: " >>";
+  position: absolute;
+  right: 0rem;
+}

@@ -51,7 +51,7 @@ function DemandCard({ data }) {
   const { id, description, price, crop, variety, duration, preference } = data;
   return (
     <>
-      <Card sx={{ width: "100%" }}>
+      <Card sx={{ width: "100%", height: "100%" }}>
         <CardActionArea
           onClick={(e) => {
             e.preventDefault();

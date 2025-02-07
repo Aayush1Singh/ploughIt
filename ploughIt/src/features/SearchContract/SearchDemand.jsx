@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Autocomplete,
   Button,
@@ -16,6 +16,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@mui/material/Skeleton";
 import axios from "axios";
 import api from "../../services/axiosApi";
+import toast from "react-hot-toast";
 const FlexIt = styled.div`
   width: 200px;
   justify-self: center;
@@ -26,6 +27,7 @@ const StyledDiv = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
+  height: 100%;
   margin-bottom: 30px;
 `;
 const Label = styled.label`
@@ -43,14 +45,10 @@ const StyleSearch = styled.div`
   grid-template-rows: 3;
 `;
 const StylePagination = styled(Pagination)`
- &.css-1xra8g6-MuiPagination-root {
-  width:fit-content;
-  justify-self:center;
- }
-
-
- 
-}
+  &.css-1xra8g6-MuiPagination-root {
+    width: fit-content;
+    justify-self: center;
+  }
 `;
 const SimpleButton = styled.button`
   border-width: 0;
@@ -84,8 +82,9 @@ async function searchAPI(
   preference,
   duration,
   cursors,
-  type
+  type,
 ) {
+  console.log(crop);
   let data = {};
   console.log("hello", "yooyo");
   await api
@@ -104,13 +103,36 @@ async function searchAPI(
             cursors,
           }),
         },
-      }
+      },
     )
     .then((response) => {
+      console.log(response);
       data = response.data;
     })
     .catch((err) => console.log(err));
+  console.log(data);
   return data;
+}
+function useSearchFilter(initial, setPage, setType) {
+  const [value, setValue] = useState(initial);
+  useEffect(() => {
+    if (
+      initial.page == value.page &&
+      JSON.stringify(initial) != JSON.stringify(value)
+    ) {
+      const debounce = setTimeout(() => {
+        console.log("hello");
+        setValue(initial);
+      }, 1000);
+      setType("");
+      setPage(0);
+      return () => clearTimeout(debounce);
+    } else if (initial.page != value.page) {
+      setValue(initial);
+    }
+  }, [initial]);
+
+  return value;
 }
 function SearchDemand() {
   const [quantity, setQuantity] = useState([0, 100]);
@@ -122,6 +144,21 @@ function SearchDemand() {
   const [duration, setDuration] = useState([0, 12]);
   const [type, setType] = useState("");
   const [page, setPage] = useState(0);
+  const [cursors, setCursors] = useState({});
+  const searchFilters = useSearchFilter(
+    {
+      quantity,
+      price,
+      crop,
+      variety,
+      preference,
+      duration,
+      page,
+    },
+    setPage,
+    setType,
+  );
+
   function handleType(data) {
     setType((type) => data);
   }
@@ -134,40 +171,17 @@ function SearchDemand() {
         quantity,
         preference,
         duration,
-        queryClient.getQueryData(["searchResults"])?.cursors,
-        type
+        cursors,
+        type,
       ),
-    queryKey: ["searchResults"],
+    staleTime: 1000 * 60 * 10,
+    queryKey: ["searchResults", searchFilters],
     onSuccess: () => console.log("data fetched"),
-    onError: (error) => console.log(error.message),
+    onError: (error) => toast.error("data could not be fetched"),
   });
-  const toggleLoading = function () {
-    setIsLoading((isLoading) => !isLoading);
-  };
-  const queryClient = useQueryClient();
-  useEffect(
-    function () {
-      toggleLoading();
-      const debounce = setTimeout(() => {
-        queryClient.invalidateQueries(["searchResults"]);
-      }, 1000);
-
-      toggleLoading();
-      return () => clearTimeout(debounce);
-    },
-    [
-      crop,
-      variety,
-      price,
-      quantity,
-      preference,
-      duration,
-      refetch,
-      page,
-      type,
-      queryClient,
-    ]
-  );
+  useEffect(() => {
+    setCursors(data?.cursors);
+  }, [data]);
   return (
     <StyleSearch>
       <StyledDiv>

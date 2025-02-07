@@ -3,78 +3,53 @@ pragma solidity ^0.8.0;
 
 contract FarmingContract {
     enum Status { Created, Accepted, Completed, Cancelled }
-    struct ContractDetails {
-        uint256 demandID;
-        string variation; 
-        string crop; 
-        uint256 quantity;
-        uint256 pricePerUnit;
-        uint256 startDate;
-        uint256 duration;
-        string status;
-        uint256 farmerID;
-        uint256 contractorID;
+    struct  terms{
+    address owner;
+    string  variation;
+    string  crop;
+    uint256  quantity;
+    uint256  pricePerUnit;
+    uint256  startDate;
+    uint256  duration;
+    bool  isCompleted;
+    uint256 farmerID;
+    uint256  contractorID;    
     }
-    mapping(uint=>ContractDetails) public register;
-    // Events
-    event ContractCreated(uint256 contractorID,uint256 farmerID, string crop, string variation, uint256 quantity, uint256 price);
-    constructor(
-    ) {
-        // register[_demandID] = ContractDetails({
-        //     demandID:_demandID,
-        //     farmerID: _farmerID,
-        //     contractorID: _contractorID,
-        //     crop: _crop,
-        //     variation: _variation,
-        //     quantity: _quantity,
-        //     pricePerUnit: _pricePerUnit,
-        //     startDate: block.timestamp,
-        //     duration: _duration,
-        //     status: 'created'
-        // });
-
-        // emit ContractCreated(_contractorID, _farmerID,_crop, _variation, _quantity, _pricePerUnit);
+    terms public contractDetails;
+/**    address owner;
+    string public variation; 
+    string public crop; 
+    uint256 public quantity;
+    uint256 public pricePerUnit;
+    uint256 public startDate;
+    uint256 public duration;
+    bool public isCompleted;
+    uint256 public farmerID;
+    uint256 public contractorID; */
+    constructor(string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID) {
+        contractDetails.owner=msg.sender;
+        contractDetails.crop=_crop;
+        contractDetails.quantity=_quantity;
+        contractDetails.variation=_variation;
+        contractDetails.duration=_duration;
+        contractDetails.pricePerUnit=_price;
+        contractDetails.farmerID=_farmerID;
+        contractDetails.contractorID=_contractorID;
+        contractDetails.isCompleted=false;
+        contractDetails.startDate=block.timestamp;
     }
- function makeContract (
-        uint256 _demandID,
-        uint256 _contractorID,
-        uint256 _farmerID,
-        string memory _crop,
-        string memory _variation,
-        uint256 _quantity,
-        uint256 _pricePerUnit,
-        uint256 _duration 
-    ) public {
-        register[_demandID] = ContractDetails({
-            demandID:_demandID,
-            farmerID: _farmerID,
-            contractorID: _contractorID,
-            crop: _crop,
-            variation: _variation,
-            quantity: _quantity,
-            pricePerUnit: _pricePerUnit,
-            startDate: block.timestamp,
-            duration: _duration,
-            status: 'created'
-        });
-
-        emit ContractCreated(_contractorID, _farmerID,_crop, _variation, _quantity, _pricePerUnit);
+    function updateStatus(bool status) public{
+        contractDetails.isCompleted=status;
     }
-    function getEndDate(uint demandID) public view returns (uint256) {
-        return register[demandID].startDate + register[demandID].duration;
+     function monthsToSeconds(uint256 _months) public pure returns (uint256) {
+        return _months * 30 * 24 * 60 * 60; // Approximate 30 days in a month
     }
-    function getCrop(uint demandID) public view returns ( string memory){
-        return register[demandID].crop;
+    function getDetail() public view returns (string memory, string memory, uint256, uint256,uint256) {
+        return (contractDetails.crop, contractDetails.variation, contractDetails.pricePerUnit,contractDetails.quantity, contractDetails.duration);
+    }    
+    function destroyContract() public {
+        require(msg.sender == contractDetails.owner, "Only owner can destroy contract");
+        require(contractDetails.isCompleted==true,'Contract is still in process or still unresolved');
+        require(contractDetails.startDate+monthsToSeconds(contractDetails.duration)<block.timestamp,'Contract Time not expired');
     }
-function getContractDetails(uint demandID) public view returns (
-    uint256, uint256, string memory, string memory, uint256
-) {
-    return (
-        register[demandID].contractorID,
-        register[demandID].farmerID,
-        register[demandID].crop,
-        register[demandID].variation,
-        register[demandID].quantity
-    );
-}
 }

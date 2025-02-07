@@ -4,7 +4,142 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import mysql from "mysql";
 import cookieParser from "cookie-parser";
-import { maker, deployContract, getContract } from "./scripts/deploy.cjs";
+import { ethers } from "ethers";
+import dotenv from "dotenv";
+import { createHash } from "crypto";
+import axios from "axios";
+dotenv.config(); // Load Environment Variables
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
+const PROVIDER_URL = process.env.PROVIDER_URL;
+const FARMING_FACTORY_ADDRESS = process.env.FARMING_FACTORY_ADDRESS;
+// Set up provider and wallet
+const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
+const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+// FarmingFactory ABI (Minimal required functions)
+const FARMING_FACTORY_ABI = [
+  {
+    inputs: [
+      {
+        internalType: "address[]",
+        name: "servers",
+        type: "address[]",
+      },
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_demandID",
+        type: "uint256",
+      },
+      {
+        internalType: "string",
+        name: "_crop",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "_variation",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "_duration",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_price",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_quantity",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_farmerID",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_contractorID",
+        type: "uint256",
+      },
+    ],
+    name: "createFarmingContract",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    name: "demandToContract",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_demandID",
+        type: "uint256",
+      },
+    ],
+    name: "getDetails",
+    outputs: [
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+      {
+        internalType: "string",
+        name: "",
+        type: "string",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "",
+        type: "uint256",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+const farmingFactory = new ethers.Contract(
+  FARMING_FACTORY_ADDRESS,
+  FARMING_FACTORY_ABI,
+  wallet
+);
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
@@ -13,45 +148,11 @@ const corsOption = {
   // "access-control-allow-origin": true,
   methods: ["GET", "POST", "PUT", "DELETE"],
 };
-const verifyJwt = (req, res, next) => {
-  const nonSecurePaths = ["/signin", "/refresh", "/signup/farmer"];
-  if (nonSecurePaths.includes(req.path)) return next();
-  const { token } = req.headers;
-  console.log("hello", "lololo");
-
-  if (!token) {
-    res.status(400).send({ status: "failed", message: "Invalid token" });
-    return;
-  }
-
-  try {
-    const decoded = jwt.verify(token, jwtSecret);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(400).send({ status: "failed", message: "Expired" });
-  }
-};
 const app = express();
 app.use(express.json());
 app.use(cors(corsOption));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-// app.use(function (req, res, next) {
-//   res.header("Access-Control-Allow-Credentials", true);
-//   res.header("Access-Control-Allow-Origin", req.headers.origin);
-//   res.header(
-//     "Access-Control-Allow-Methods",
-//     "GET,PUT,POST,DELETE,UPDATE,OPTIONS"
-//   );
-//   res.header(
-//     "Access-Control-Allow-Headers",
-//     "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept"
-//   );
-//   next();
-// });
-
-app.use(verifyJwt);
 
 const con = mysql.createConnection({
   host: "localhost",
@@ -68,9 +169,36 @@ con.connect(function (err) {
     console.log("connection created with mysql successfully");
   }
 });
+const verifyJwt = (req, res, next) => {
+  const nonSecurePaths = [
+    "/signin",
+    "/refresh",
+    "/signup/farmer",
+    "/searchContract",
+    "/payment",
+    "/status/:txnId",
+  ];
+  if (nonSecurePaths.includes(req.path)) return next();
+  const { token } = req.headers;
+  // console.log("hello", "lololo");
+
+  if (!token) {
+    res.status(400).send({ status: "failed", message: "Invalid token" });
+    return;
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(400).send({ status: "failed", message: "Expired" });
+  }
+};
+app.use(verifyJwt);
 app.get("/signin", async (req, res) => {
   const { password, email, role } = req.headers;
-  console.log(password, email, role);
+  // console.log(password, email, role);
 
   if (!password || !email || !role) {
     res.status(400).send({
@@ -83,7 +211,7 @@ app.get("/signin", async (req, res) => {
     if (result.length == 0) {
       res
         .status(400)
-        .send({ status: "failed", error: "username/email invalid" });
+        .send({ status: "failed", message: "username/email invalid" });
       return;
     }
     bcrypt.compare(
@@ -135,7 +263,7 @@ app.get("/signin", async (req, res) => {
                 ? result[0].farmerID
                 : result[0].contractorID,
           });
-          console.log("hello");
+          // console.log("hello");
           var today = new Date();
           var expirationTime = new Date(today.getTime() + 24 * 60 * 60 * 1000);
           const hash = await bcrypt.hash(refreshToken, salt);
@@ -362,17 +490,17 @@ app.get("/demand/search/next", (req, res) => {
     });
     return;
   }
-  console.log(
-    `select * from demand where quantity between ${quantity[0]} and ${
-      quantity[1]
-    } and duration between ${duration[0]} and ${duration[1]} ${
-      preference === "" ? "" : `and preference like "${preference}"`
-    } and price>=${price} ${
-      crop.length > 0 ? `and crop in ("${crop.join(`","`)}")` : ""
-    } ${
-      variety.length > 0 ? `and variety in ("${variety.join(`","`)}")` : ""
-    } and auto_id>${cursors.next} order by auto_id limit ${PAGE_SIZE + 1};`
-  );
+  // console.log(
+  //   `select * from demand where quantity between ${quantity[0]} and ${
+  //     quantity[1]
+  //   } and duration between ${duration[0]} and ${duration[1]} ${
+  //     preference === "" ? "" : `and preference like "${preference}"`
+  //   } and price>=${price} ${
+  //     crop.length > 0 ? `and crop in ("${crop.join(`","`)}")` : ""
+  //   } ${
+  //     variety.length > 0 ? `and variety in ("${variety.join(`","`)}")` : ""
+  //   } and auto_id>${cursors.next} order by auto_id limit ${PAGE_SIZE + 1};`
+  // );
   con.query(
     `select * from demand where quantity between ${quantity[0]} and ${
       quantity[1]
@@ -503,20 +631,20 @@ app.post("/signup/farmer", (req, res) => {
   );
 });
 app.get("/refresh", async (req, res) => {
-  console.log("kk");
-  console.log(req.headers);
+  // console.log("kk");
+  // console.log(req.headers);
   const { refreshToken } = req.cookies;
   // const { role, id, password } =
   let decoded = {};
   try {
     decoded = await jwt.verify(refreshToken, jwtSecret);
   } catch (error) {
-    console.log("yolo");
-    console.log(error);
+    // console.log("yolo");
+    // console.log(error);
     res.status(400).send({ status: "failed", message: "ExpiredRefresh" });
     return;
   }
-  console.log(decoded);
+  // console.log(decoded);
   const { id, email, role } = decoded;
   if (!refreshToken) {
     res.status(401).send({ message: "Invalid" });
@@ -524,7 +652,7 @@ app.get("/refresh", async (req, res) => {
   con.query(
     `select refreshToken from refreshLogin where id=${id} and role='${role}'`,
     (err, result) => {
-      console.log(result);
+      // console.log(result);
       if (err || result.length == 0) {
         res.status(505).send({ status: "failed", message: "Invalid Login" });
         return;
@@ -555,7 +683,7 @@ app.get("/refresh", async (req, res) => {
               jwtSecret,
               { expiresIn: 20 }
             );
-            console.log("just sendin'");
+            // console.log("just sendin'");
             res.status(200).send({
               accessToken,
               id,
@@ -594,6 +722,7 @@ app.get("/details", (req, res) => {
   } catch (err) {}
 });
 app.get("/:role/demand/pending", (req, res) => {
+  console.log("hello");
   const { data } = req.headers;
   const { id } = JSON.parse(data);
   if (!id) {
@@ -621,7 +750,7 @@ app.get("/:role/demand/pending", (req, res) => {
 app.get("/farmer/demand/pending", (req, res) => {
   const { data } = req.headers;
   const { id } = JSON.parse(data);
-  console.log("hello");
+  // console.log("hello");
   if (!id) {
     res.status(400).send({
       status: "failed",
@@ -639,7 +768,7 @@ app.get("/farmer/demand/pending", (req, res) => {
         });
         return;
       }
-      console.log(result);
+      // console.log(result);
       res.status(200).send(result);
       return;
     }
@@ -685,13 +814,13 @@ app.get("/signin/verify/protect", (req, res) => {
 app.get("/update", (req, res) => {
   const data = JSON.parse(req.headers.data);
   delete data["created_at"];
-  console.log(
-    `replace into demand(${Object.entries(data)
-      .map((entries) => JSON.stringify(entries[0]))
-      .join(",")}) values(${Object.entries(data)
-      .map((entries) => JSON.stringify(entries[1]))
-      .join(",")})`
-  );
+  // console.log(
+  //   `replace into demand(${Object.entries(data)
+  //     .map((entries) => JSON.stringify(entries[0]))
+  //     .join(",")}) values(${Object.entries(data)
+  //     .map((entries) => JSON.stringify(entries[1]))
+  //     .join(",")})`
+  // );
   con.query(
     `replace into demand(${Object.entries(data)
       .map((entries) => entries[0])
@@ -716,7 +845,7 @@ app.get("/update", (req, res) => {
 });
 app.get("/proposal/insert", (req, res) => {
   const data = JSON.parse(req.headers.data);
-  console.log(data);
+  // console.log(data);
   // con.query(
   //   `delete from proposal where farmerID=${data.farmerID} and demandID=${data.demandID}`
   // );
@@ -753,25 +882,38 @@ app.listen(3000, (err) => {
   console.log("Server Started");
   // console.log(`Smart contract is deployed at: ${contractAddress}`);
 });
+app.get("/farmer/proposals", (req, res) => {
+  console.log("lklkl", "hello");
+  const { id } = JSON.parse(req.headers.data);
+  console.log(id);
+  con.query(`select * from proposal where farmerID=${id};`, (err, result) => {
+    if (err) {
+      res.send({ status: "failed", message: "data couldn.t be fetched" });
+      return;
+    }
+    console.log(result);
+    res.send({ result, status: "success", message: "data fetched" });
+  });
+});
 app.get("/proposal/:demandID", (req, res) => {
   // console.log(req);
-  console.log(req.params);
-  console.log(`select * from proposals where demandID=${req.params.demandID}`);
+  // console.log(req.params);
+  // console.log(`select * from proposals where demandID=${req.params.demandID}`);
   con.query(
     `select * from proposal where demandID=${req.params.demandID};`,
     (err, result) => {
       if (err) {
-        console.log("hello");
+        // console.log("hello");
         res.send({ status: 505, message: "data could not be fetched" });
         return;
       }
-      console.log(result);
+      // console.log(result);
       res.send({ result, status: 200, message: "data successfully fetched" });
     }
   );
 });
 app.get("/proposal/accepted/:demandID", (req, res) => {
-  console.log(req.headers, "kkkkkkkkkkkkkkkkkkkkkk");
+  // console.log(req.headers, "kkkkkkkkkkkkkkkkkkkkkk");
   let {
     demandID,
     farmerID,
@@ -787,11 +929,11 @@ app.get("/proposal/accepted/:demandID", (req, res) => {
      when demandID=${demandID} then 'R'
      end where demandID=${demandID};`
     );
-    console.log(`update demand set price=${price},
-     duration=${duration},
-     description=concat(description,farmerDesc),
-     contractor_approval=true 
-     where demandID=${demandID};`);
+    // console.log(`update demand set price=${price},
+    //  duration=${duration},
+    //  description=concat(description,farmerDesc),
+    //  contractor_approval=true
+    //  where demandID=${demandID};`);
     con.query(
       `update demand set price=${price},
      duration=${duration},
@@ -801,7 +943,7 @@ app.get("/proposal/accepted/:demandID", (req, res) => {
      where auto_id=${demandID};`
     );
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     res.status(505).send({
       status: "failed",
       message: "internal server error updates could not take place",
@@ -810,8 +952,6 @@ app.get("/proposal/accepted/:demandID", (req, res) => {
   }
   res.status(200).send({ status: "success", message: "updates done" });
 });
-await deployContract();
-let arr = [1, 2];
 app.get("/makeContract", async (req, res) => {
   console.log("hello");
   const {
@@ -825,28 +965,141 @@ app.get("/makeContract", async (req, res) => {
     contractorID,
     farmerID,
   } = JSON.parse(req.headers.demand);
-  console.log(
-    "hellokkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk"
-  );
-  await maker(
-    auto_id,
-    contractorID,
-    farmerID,
-    crop,
-    variety,
-    quantity,
-    price,
-    duration
-  );
-  arr.push(auto_id);
-  for (let i = 0; i < arr.length; i++) {
-    console.log(await getContract(arr[i]));
+  try {
+    const tx = await farmingFactory.createFarmingContract(
+      auto_id,
+      crop,
+      variety,
+      duration,
+      price,
+      quantity,
+      farmerID,
+      contractorID
+    );
+    // console.log(`Transaction sent: ${tx.hash}`);
+    await tx.wait(); // Wait for confirmation
+    // console.log("Contract created successfully!");
+    res.send({ transactionHash: tx.hash, status: "success" });
+  } catch (err) {
+    console.log(err);
   }
-  res.send("ok");
 });
-for (let i = 0; i < arr.length; i++) {
-  console.log(await getContract(arr[i]));
+app.get("/searchContract", async (req, res) => {
+  const { demandid } = req.headers;
+  console.log(req.headers, Number(demandid));
+
+  const x = await farmingFactory.getDetails(Number(demandid));
+
+  // console.log(x);
+  res.send({
+    result: JSON.parse(
+      JSON.stringify(x, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+    ),
+    status: "success",
+    message: "data successfully fetched",
+  });
+});
+async function payment(req, res) {
+  try {
+    let { amount } = req.headers;
+    if (!amount) amount = 1000;
+    const data = {
+      merchantId: "PGTESTPAYUAT",
+      merchantTransactionId: "MT7850590068188104",
+      merchantUserId: "MUID123",
+      amount: amount,
+      redirectUrl: "https://localhost:3000/pay-return-url",
+      redirectMode: "REDIRECT",
+      callbackUrl: "https://localhost:3000/pay-return-url",
+      mobileNumber: "9999999999",
+      paymentInstrument: {
+        type: "PAY_PAGE",
+      },
+    };
+    const payload = JSON.stringify(data);
+    const payloadMain = Buffer.from(payload, "utf8").toString("base64");
+    const salt_index = 1;
+    const string = payloadMain + "/pg/v1/pay" + salt_index;
+    const sha256 = createHash("sha256").update(string).digest("hex");
+    const checksum = sha256 + "###" + salt_index;
+    const prod_url =
+      "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay";
+    const options = {
+      method: "post",
+      url: "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay", //prod_url
+      headers: {
+        accept: "application/json",
+        "Content-Type": "application/json",
+        "X-VERIFY": checksum,
+      },
+      data: {
+        request: payloadMain,
+      },
+    };
+    axios
+      .request(options)
+      .then(function (response) {
+        // console.log(response.data);
+        return res.redirect(
+          response.data.data.instrumentResponse.redirectInfo.url
+        );
+      })
+      .catch(function (error) {
+        // console.error(error);
+        res.status(500).send({
+          message: error.message,
+          success: false,
+        });
+      });
+  } catch (err) {
+    // console.log(err);
+    res.status(500).send({
+      message: err.message,
+      success: false,
+    });
+  }
 }
+const checkStatus = async (req, res) => {
+  const merchantTransactionId = req.params.txnId;
+  const merchantId = "PGTESTPAYUAT";
+  const keyIndex = 1;
+  const string =
+    `/pg/v1/status/${merchantId}/${merchantTransactionId}` +
+    process.env.SALT_KEY;
+  const sha256 = crypto.createHash("sha256").update(string).digest("hex");
+  const checksum = sha256 + "###" + keyIndex;
+  const options = {
+    method: "GET",
+    url: `https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${merchantTransactionId}`,
+    headers: {
+      accept: "application/json",
+      "Content-Type": "application/json",
+      "X-VERIFY": checksum,
+      "X-MERCHANT-ID": `${merchantId}`,
+    },
+  };
+  axios
+    .request(options)
+    .then(async (response) => {
+      if (response.data.success === true) {
+        // console.log(response.data);
+        return res
+          .status(200)
+          .send({ success: true, message: "Payment Success" });
+      } else {
+        return res
+          .status(400)
+          .send({ success: false, message: "Payment Failure" });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send({ msg: err.message });
+    });
+};
+app.get("/payment", payment);
+app.get("/status/:txnId", checkStatus);
+
 /*
 {
 "crop":  "wheat",

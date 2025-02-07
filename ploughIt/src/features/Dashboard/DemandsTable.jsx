@@ -2,7 +2,22 @@ import { useState, createPortal } from "react";
 import styled, { css } from "styled-components";
 import UpdateDemand from "./UpdateDemand";
 import Modal2, { FlexIt } from "./Modal2";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Table,
+} from "@mui/material";
+import { makeStyles } from "@mui/styles";
 export const StyledTableRow = styled.div`
   width: 100%;
 
@@ -17,7 +32,7 @@ export const StyledTableRow = styled.div`
     background-color: #eee;
   }
 `;
-export const Table = styled.div`
+export const TableT = styled.div`
   width: 37rem;
   justify-items: center;
   max-height: 20rem;
@@ -95,36 +110,73 @@ export const StyledButton = styled.button`
     );
   }};
 `;
-export function TableRow({ data, contractorID, children }) {
-  const [display, setDisplay] = useState(false);
+
+export const columns = [
+  { field: "auto_id", headerName: "ID", width: 70 },
+  { field: "crop", headerName: "Crop", width: 130 },
+  { field: "variety", headerName: "Variety", width: 130 },
+  { field: "preference", headerName: "Quantity", width: 150 },
+  { field: "preference", headerName: "Preference", width: 150 },
+  { field: "status", headerName: "Status", width: 120 },
+  {
+    field: "duration",
+    headerName: "Duration",
+    type: "number",
+    width: 120,
+  },
+  { field: "", headerName: "Action" },
+];
+const Styledspan = styled.span`
+  ${({ variation }) =>
+    variation == "pending" &&
+    css`
+      color: var(--color-yellow-500);
+    `}
+`;
+export function TableRow2({ data, navigate, contractorID }) {
   const [update, setUpdate] = useState(false);
   return (
     <>
-      <StyledTableRow onClick={(e) => setDisplay((display) => !display)}>
-        <p>{data.auto_id}</p>
-        <p>{data.crop}</p>
-        <p>{data.variety}</p>
-        <p>{data.quantity}</p>
-        <p>{data.preference}</p>
-        <p>{data.status}</p>
-        <p>{data.duration}</p>
-        <FlexIt style={{ borderBottom: `0px` }}>
-          <StyledButton
-            onClick={(e) => {
-              setUpdate((update) => !update);
-            }}
-          >
-            🖊️
-          </StyledButton>
-          <StyledButton
-            onClick={(e) => {
-              setUpdate((update) => !update);
-            }}
-          >
-            🗑️
-          </StyledButton>
-        </FlexIt>
-      </StyledTableRow>
+      <TableRow
+        key={data.created_at}
+        onClick={(e) => {
+          e.preventDefault();
+          // console.log("hello");
+          navigate(`/home/dashboard/${data.auto_id}`, { state: data });
+        }}
+        className="hover:bg-lime-100"
+      >
+        <TableCell>{data.auto_id}</TableCell>
+        <TableCell>{data.crop}</TableCell>
+        <TableCell>{data.variety}</TableCell>
+        <TableCell>{data.quantity}</TableCell>
+        <TableCell>{data.preference}</TableCell>
+        <TableCell>
+          <Styledspan variation={`${data.status}`}>{data.status}</Styledspan>
+        </TableCell>
+        <TableCell>{data.duration}</TableCell>
+        <TableCell>
+          <FlexIt style={{ borderBottom: `0px` }}>
+            <StyledButton
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setUpdate((update) => !update);
+              }}
+            >
+              🖊️
+            </StyledButton>
+            <StyledButton
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              🗑️
+            </StyledButton>
+          </FlexIt>
+        </TableCell>
+      </TableRow>
       {update && (
         <Modal2
           id={data.auto_id}
@@ -135,47 +187,46 @@ export function TableRow({ data, contractorID, children }) {
           <UpdateDemand data={data} id={contractorID}></UpdateDemand>
         </Modal2>
       )}
-      {display && children && <div>description: {children}</div>}
     </>
   );
 }
-function DemandsTable({ data, contractorID }) {
+const useStyles = makeStyles({
+  root: {
+    "& .MuiTableCell-head": {
+      color: "white",
+      backgroundColor: "blue",
+    },
+  },
+});
+export function DemandsTable({ rows, contractorID }) {
+  console.log(rows);
+  const navigate = useNavigate();
+
   return (
-    <Table>
-      <TableRow
-        data={{
-          auto_id: "ID",
-          variety: "Variety",
-          crop: "Crop",
-          quantity: "Quantity",
-          preference: "Preference",
-          status: "Status",
-          duration: "Duration",
-        }}
-      ></TableRow>
-      {data &&
-        data?.map((item) => {
-          console.log(item);
-          return (
-            <TableRow
-              key={item.auto_id}
-              data={item}
-              contractorID={contractorID}
-            >
-              {" "}
-              <NavLink
-                to={{
-                  pathname: `/home/dashboard/${item.auto_id}`,
-                }}
-                state={item}
-                key={item.auto_id}
-              >
-                link to
-              </NavLink>
-            </TableRow>
-          );
-        })}
-    </Table>
+    <TableContainer className="h-full max-w-fit overflow-auto rounded-xl border-2 border-blue-500">
+      <Table>
+        <TableHead className="border-separate bg-lime-500">
+          {columns.map((column) => (
+            <TableCell key={column.field + Math.random()}>
+              {column.headerName}
+            </TableCell>
+          ))}
+        </TableHead>
+        <TableBody className="h-9">
+          {rows?.map((data) => {
+            return (
+              <>
+                <TableRow2
+                  data={data}
+                  contractorID={contractorID}
+                  navigate={navigate}
+                ></TableRow2>
+              </>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }
 

@@ -14,58 +14,55 @@ import Modal from "./ui/Modal";
 import NotFound from "./pages/NotFound";
 import ProtectRoutes from "./pages/ProtectRoutes";
 import RedirectPage from "./pages/RedirectPage";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import store, { persistor } from "./pages/store";
 import DemandDetials from "./features/DemandDetails.jsx/DemandDetials";
 import { PersistGate } from "redux-persist/integration/react";
-
+import { Toaster } from "react-hot-toast";
 function App() {
-  const queryClient = new QueryClient({ staleTime: Infinity });
+  const queryClient = new QueryClient();
+  const { role } = useSelector((state) => state.user);
   return (
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
-      <Provider store={store}>
-        <PersistGate
-          loading={<div>Loading...</div>}
-          persistor={persistor}
-          onBeforeLift={() => {
-            console.log("Rehydration complete", store.getState());
-          }}
-        >
-          <BrowserRouter>
-            <Routes>
-              <Route element={<RedirectPage></RedirectPage>} path="/"></Route>
-              <Route element={<Login></Login>} path="/login"></Route>
-              {/* </Routes>
 
-        <Routes> */}
+      <Toaster></Toaster>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<RedirectPage></RedirectPage>} path="/"></Route>
+          <Route element={<Login></Login>} path="/login"></Route>
+          <Route
+            path="/home"
+            element={
+              <ProtectRoutes>
+                <AppLayout></AppLayout>
+              </ProtectRoutes>
+            }
+          >
+            <Route path="dashboard" element={<Dashboard />}></Route>
+
+            <Route
+              path="dashboard/:demandID"
+              element={<DemandDetials />}
+            ></Route>
+            <Route path="settings" element={<Settings />}></Route>
+            {role == "contractor" && (
+              <Route path="uploadDemand" element={<UploadDemand />}></Route>
+            )}
+
+            <Route path="lease" element={<Lease></Lease>}></Route>
+            {role == "farmer" && (
               <Route
-                path="/home"
-                element={
-                  <ProtectRoutes>
-                    <AppLayout></AppLayout>
-                  </ProtectRoutes>
-                }
-              >
-                <Route path="dashboard" element={<Dashboard />}></Route>
-                <Route
-                  path="dashboard/:demandID"
-                  element={<DemandDetials />}
-                ></Route>
-                <Route path="settings" element={<Settings />}></Route>
-                <Route path="createParcel" element={<UploadDemand />}></Route>
-                <Route path="lease" element={<Lease></Lease>}></Route>
-                <Route
-                  path="search"
-                  element={<SearchDemand></SearchDemand>}
-                ></Route>
-                <Route element={<NotFound></NotFound>} path="*"></Route>
-              </Route>
-              <Route element={<Modal></Modal>} path="/modal"></Route>
-            </Routes>
-          </BrowserRouter>
-        </PersistGate>
-      </Provider>
+                path="search"
+                element={<SearchDemand></SearchDemand>}
+              ></Route>
+            )}
+
+            <Route element={<NotFound></NotFound>} path="*"></Route>
+          </Route>
+          <Route element={<Modal></Modal>} path="/modal"></Route>
+        </Routes>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }
