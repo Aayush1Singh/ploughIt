@@ -1016,7 +1016,7 @@ app.get("/refresh", async (req, res) => {
     .select("*")
     .eq("id", id)
     .eq("role", role);
-  // console.log("moma lelo ", result);
+  console.log("moma lelo ", result, err);
   if (err || result.length == 0) {
     res.status(505).send({ status: "failed", message: "Invalid Login" });
     return;
