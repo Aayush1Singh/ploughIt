@@ -20,7 +20,7 @@ const Background = styled.div`
   align-items: center;
   justify-content: center;
 `;
-
+const API_URL = import.meta.env.BACKEND_URL;
 function Login() {
   const dispatch = useDispatch();
   const QueryClient = useQueryClient();
@@ -33,7 +33,7 @@ function Login() {
   const [formData, setFormData] = useState({});
   const login = async function ({ queryKey }) {
     const data = queryKey[1];
-    const data1 = await api.get("http://localhost:3000/signin", {
+    const data1 = await api.get(`${API_URL}/signin`, {
       headers: data,
       withCredentials: true,
     });

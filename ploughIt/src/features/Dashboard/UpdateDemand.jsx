@@ -16,6 +16,8 @@ const Select = styled.select`
 const StyledForm = styled(Form)`
   gap: 2rem;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 function UpdateDemand({ data, id, updateTempData, setUpdateDisplay }) {
   const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
@@ -30,7 +32,7 @@ function UpdateDemand({ data, id, updateTempData, setUpdateDisplay }) {
     console.log({ ...data, ...data2 });
     if (updateTempData) updateTempData({ ...data, ...data2 });
     api
-      .get("http://localhost:3000/update", {
+      .get(`${API_URL}/update`, {
         headers: { data: JSON.stringify({ ...data, ...data2 }) },
       })
       .then((response) => {

@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+const API_URL = import.meta.env.BACKEND_URL;
 
 function useCheckAuth() {
   let isauth = false;
@@ -13,7 +14,7 @@ function useCheckAuth() {
   console.log(1);
   const a = async function () {
     await axios
-      .get("http://localhost:3000/signin/verify", {
+      .get(`${API_URL}/signin/verify`, {
         headers: { token: getToken },
       })
       .then((response) => {

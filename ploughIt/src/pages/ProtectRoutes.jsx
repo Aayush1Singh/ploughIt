@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/axiosApi";
 import { useDispatch } from "react-redux";
 import { logIn } from "./userSlice";
+const API_URL = import.meta.env.BACKEND_URL;
+
 export const ProtectRoutes = ({ children }) => {
   const navigate = useNavigate();
   const [isAuth, setIsAuth] = useState(false);
@@ -11,7 +13,7 @@ export const ProtectRoutes = ({ children }) => {
   useEffect(() => {
     const verify = async function (getToken) {
       await api
-        .get("http://localhost:3000/signin/verify/protect", {
+        .get(`${API_URL}/signin/verify/protect`, {
           headers: { token: getToken },
         })
         .then((response) => {

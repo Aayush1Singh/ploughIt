@@ -28,6 +28,7 @@ export const MSlider = styled(Slider)`
 export const MFormControl = styled(FormControl)`
   width: 13rem;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
 
 function UploadDemand() {
   const { id, role } = useSelector((state) => state.user);
@@ -36,7 +37,7 @@ function UploadDemand() {
   const { register, handleSubmit, formState } = useForm();
   const navigate = useNavigate();
   async function makePaymentPrompt(data) {
-    const payData = await api.get("http://localhost:3000/get-wallet");
+    const payData = await api.get(`${API_URL}/get-wallet`);
     const { address, signature, publicKey } = payData.data;
     const d2 = await ethers.verifyMessage(address, signature);
     if (publicKey == d2) {
@@ -63,12 +64,9 @@ function UploadDemand() {
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    let convertercryptoToDollars = await api.get(
-      "http://localhost:3000/convertMoney",
-      {
-        headers: { data: JSON.stringify(data) },
-      },
-    );
+    let convertercryptoToDollars = await api.get(`${API_URL}/convertMoney`, {
+      headers: { data: JSON.stringify(data) },
+    });
 
     convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
     convertercryptoToDollars = convertercryptoToDollars.data[0].quote.ETH.price;
@@ -106,7 +104,7 @@ function UploadDemand() {
       return;
     }
     api
-      .get("http://localhost:3000/demand/insert", {
+      .get(`${API_URL}/demand/insert`, {
         headers: { data: JSON.stringify(data), res },
       })
       .then((response) => {

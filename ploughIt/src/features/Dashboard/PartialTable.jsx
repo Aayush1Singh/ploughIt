@@ -33,6 +33,8 @@ export const StyledTableRow = styled.div`
     background-color: #eee;
   }
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 // export const Table = styled.div`
 //   width: 37rem;
 //   justify-items: center;
@@ -184,7 +186,7 @@ export function PartialTableRow({ data, navigate, contractorID }) {
                 variation="accept"
                 onClick={() => {
                   data[`${role}ID`] = id;
-                  api.get("http://localhost:3000/makeContract", {
+                  api.get(`${API_URL}/makeContract`, {
                     headers: { demand: JSON.stringify(data) },
                   });
                 }}

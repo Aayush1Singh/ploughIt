@@ -36,6 +36,8 @@ const StyledDiv = styled.div`
   font-size: 20px;
   gap: 1rem;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 // function TableRow({ data }) {
 //   const [isOpen, setOpenModal] = useState(false);
 //   const [propose, setProposal] = useState(false);
@@ -206,6 +208,7 @@ export function TableRow2({ data, navigate }) {
     </>
   );
 }
+
 export function AllProposalsTable() {
   const navigate = useNavigate();
   // console.log(rows);
@@ -217,7 +220,7 @@ export function AllProposalsTable() {
     { headerName: "Status" },
   ];
   async function searchAllProposals() {
-    return await api.get("http://localhost:3000/proposal/search", {
+    return await api.get(`${API_URL}/proposal/search`, {
       headers: { id },
     });
   }

@@ -5,6 +5,7 @@ const api = axios.create({
   // baseURL: "http://localhost:3000", // Replace with your backend URL
   withCredentials: true, // Include cookies with requests if necessary
 });
+const API_URL = import.meta.env.BACKEND_URL;
 
 // Request Interceptor for attaching token
 api.interceptors.request.use((config) => {
@@ -64,7 +65,7 @@ api.interceptors.response.use(
       try {
         // console.log("hello");
         const response = await axios
-          .get("http://localhost:3000/refresh", {
+          .get(`${API_URL}/refresh`, {
             withCredentials: true,
           })
           .then((response) => {

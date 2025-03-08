@@ -2,13 +2,14 @@ import axios from "axios";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/axiosApi";
+const API_URL = import.meta.env.BACKEND_URL;
 
 function RedirectPage() {
   const navigate = useNavigate();
   console.log(localStorage.getItem("jwt"));
   const a = async function () {
     await api
-      .get("http://localhost:3000/signin/verify/protect", {
+      .get(`${API_URL}/signin/verify/protect`, {
         headers: { token: localStorage.getItem("jwt") },
       })
       .then((response) => {

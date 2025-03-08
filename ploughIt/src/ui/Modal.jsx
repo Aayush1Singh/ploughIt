@@ -111,6 +111,8 @@ const Textarea = styled.textarea`
   max-height: 4rem;
   min-height: 4rem;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 export function ContentRow({ rowName, content, suffix }) {
   return (
     <ThirdMainHead>
@@ -146,7 +148,7 @@ export function Modal({ data: details, setIsOpen }) {
   async function proposalInsert(data) {
     console.log("gay");
     data = { ...data, status: "P" };
-    const res = await api.get("http://localhost:3000/proposal/insert", {
+    const res = await api.get(`${API_URL}/proposal/insert`, {
       headers: { data: JSON.stringify(data) },
     });
     if (res instanceof Error) {

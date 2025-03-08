@@ -38,13 +38,15 @@ export const StyleStatus = styled.span`
       color: var(--color-green-500);
     `}
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 function TableRow2({ data, farmerID }) {
   console.log(data);
   const [isOpen, setOpenModal] = useState(false);
   const [originalData, setOriginalData] = useState({});
 
   async function getData() {
-    const x = await api.get("http://localhost:3000/demand/search/id", {
+    const x = await api.get(`${API_URL}/demand/search/id`, {
       headers: { data: JSON.stringify({ id: data.demandID }) },
     });
     console.log(x);

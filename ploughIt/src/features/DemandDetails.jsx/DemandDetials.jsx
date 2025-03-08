@@ -35,6 +35,8 @@ const StyledTableHead = styled.div`
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 const TableHeadT = function () {
   return (
     <StyledTableHead>
@@ -72,12 +74,9 @@ const TableRowT = function ({ data }) {
             <StyledButton
               variation={"accept"}
               onClick={() => {
-                api.get(
-                  `http://localhost:3000/proposal/accepted/${data.demandID}`,
-                  {
-                    headers: { proposal: JSON.stringify(data) },
-                  },
-                );
+                api.get(`${API_URL}/proposal/accepted/${data.demandID}`, {
+                  headers: { proposal: JSON.stringify(data) },
+                });
               }}
             >
               Yes
@@ -142,7 +141,7 @@ const ContentDiv = function ({ data }) {
     </div>
   );
 };
-function TableRow2({ data ,navigate}) {
+function TableRow2({ data, navigate }) {
   console.log(data);
   const [sureModel, setSureModel] = useState(false);
   const [rejected, setRejected] = useState(data.status == "R" ? true : false);
@@ -171,12 +170,11 @@ function TableRow2({ data ,navigate}) {
           <StyledButton
             variation={"reject"}
             onClick={(e) => {
-              api.get("http://localhost:3000/proposal/reject", {
+              api.get(`${API_URL}/proposal/reject`, {
                 headers: { data: JSON.stringify(data) },
               });
               toast.success("proposal rejected");
               setRejected(true);
-            
             }}
           >
             Reject
@@ -189,28 +187,24 @@ function TableRow2({ data ,navigate}) {
               <StyledButton
                 variation={"accept"}
                 onClick={() => {
-
-                  api.get(
-                    `http://localhost:3000/proposal/accepted/${data.demandID}`,
-                    {
+                  api
+                    .get(`${API_URL}/proposal/accepted/${data.demandID}`, {
                       headers: { proposal: JSON.stringify(data) },
-                    },
-                  ).then((res)=>{
-                    console.log(res);
-                    toast.error('inida');
-                    if(res.data.status=='failed'){
-                      toast.error(res?.response.data.message || 'could not make contracct due to insufficient funds');
-                      setSureModel(false);
-
-                    }
-                    else{
-                      toast.success('Proposal accepted and contract made');
-                      navigate('/home/dashboard');
-    
-                    }
-                  });
-                  
-                  
+                    })
+                    .then((res) => {
+                      console.log(res);
+                      toast.error("inida");
+                      if (res.data.status == "failed") {
+                        toast.error(
+                          res?.response.data.message ||
+                            "could not make contracct due to insufficient funds",
+                        );
+                        setSureModel(false);
+                      } else {
+                        toast.success("Proposal accepted and contract made");
+                        navigate("/home/dashboard");
+                      }
+                    });
                 }}
               >
                 Yes
@@ -231,6 +225,7 @@ const columns = [
   { headerName: "Duration" },
   { headerName: "Actions" },
 ];
+
 function DemandDetials() {
   const navigate = useNavigate();
   const param = useParams();
@@ -240,12 +235,10 @@ function DemandDetials() {
   const [proposals, setProposals] = useState([]);
   useEffect(() => {
     //send a req to fetch all demands related to a singhe demandID;
-    api
-      .get(`http://localhost:3000/proposal/${param.demandID}`)
-      .then((response) => {
-        console.log(response.data.result);
-        setProposals(response.data.result);
-      });
+    api.get(`${API_URL}/proposal/${param.demandID}`).then((response) => {
+      console.log(response.data.result);
+      setProposals(response.data.result);
+    });
   }, [state]);
   return (
     <div className="grid h-full gap-2 overflow-auto">

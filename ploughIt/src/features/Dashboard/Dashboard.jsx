@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import OngoingContracts from "./OngoingContracts";
 import { Visual } from "./Visual";
 import ProposalsTable from "./ProposalsTable";
+const API_URL = import.meta.env.BACKEND_URL;
+
 export default function Dashboard() {
   const { role, id, email } = useSelector((state) => state.user);
   const user = useSelector((state) => state.user);
@@ -17,25 +19,25 @@ export default function Dashboard() {
   const [ongoingData, setOngoingData] = useState([]);
   const [proposalData, setProposalData] = useState([]);
   async function demandFn() {
-    const data = await api.get(`http://localhost:3000/${role}/demand/pending`, {
+    const data = await api.get(`${API_URL}/${role}/demand/pending`, {
       headers: { data: JSON.stringify({ id }) },
     });
     return data;
   }
   async function partialDemands() {
-    const data = await api.get(`http://localhost:3000/${role}/demand/partial`, {
+    const data = await api.get(`${API_URL}/${role}/demand/partial`, {
       headers: { data: JSON.stringify({ id }) },
     });
     return data;
   }
   async function ongoingDemands() {
-    const data = await api.get(`http://localhost:3000/${role}/demand/ongoing`, {
+    const data = await api.get(`${API_URL}/${role}/demand/ongoing`, {
       headers: { data: JSON.stringify({ id }) },
     });
     return data;
   }
   async function proposals() {
-    const data = await api.get(`http://localhost:3000/${role}/proposals`, {
+    const data = await api.get(`${API_URL}/${role}/proposals`, {
       headers: { data: JSON.stringify({ id }) },
     });
     return data;

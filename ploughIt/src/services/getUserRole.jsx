@@ -2,6 +2,8 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { logIn } from "../pages/userSlice";
 import { useDispatch } from "react-redux";
+const API_URL = import.meta.env.BACKEND_URL;
+
 function useUserRole() {
   const dispatch = useDispatch();
   const [a, seta] = useState({});
@@ -13,7 +15,7 @@ function useUserRole() {
   useEffect(() => {
     async function a2() {
       await axios
-        .get("http://localhost:3000/signin/verify", {
+        .get(`${API_URL}/signin/verify`, {
           headers: { token: localStorage.getItem("jwt") },
         })
         .then((response) => {

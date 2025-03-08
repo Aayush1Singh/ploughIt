@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import { StyledButton } from "./DemandsTable";
 import api from "@/services/axiosApi";
 import { ethers } from "ethers";
+const API_URL = import.meta.env.BACKEND_URL;
+
 const FARMING_CONTRACT_T2_ABI = [
   {
     anonymous: false,
@@ -98,17 +100,14 @@ const FARMING_CONTRACT_T2_ABI = [
 ];
 function OngoingDemandDetails() {
   const { state } = useLocation();
-  api.get(`http://localhost:3000/contract/${state.contractID}`).then((res) => {
+  api.get(`${API_URL}/contract/${state.contractID}`).then((res) => {
     console.log(res);
   });
   async function completeContract() {
     try {
-      const response = await api.get(
-        `http://localhost:3000/getContractAddress`,
-        {
-          headers: { contractID: state.contractID },
-        },
-      );
+      const response = await api.get(`${API_URL}/getContractAddress`, {
+        headers: { contractID: state.contractID },
+      });
       console.log(response);
       const addressDest = response.data.contractAddress;
       await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -135,13 +134,13 @@ function OngoingDemandDetails() {
   }
   async function payRest() {
     let convertercryptoToDollars = await api.get(
-      "http://localhost:3000/convertMoneyRest",
+      `${API_URL}/convertMoneyRest`,
       {
         headers: { data: JSON.stringify(state) },
       },
     );
     console.log(convertercryptoToDollars);
-    const response = await api.get(`http://localhost:3000/getContractAddress`, {
+    const response = await api.get(`${API_URL}/getContractAddress`, {
       headers: { contractID: state.contractID },
     });
     console.log(response);

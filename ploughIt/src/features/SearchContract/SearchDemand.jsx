@@ -74,6 +74,8 @@ const DemandWindow = styled.div`
   grid-template-columns: 1fr 1fr 1fr;
   display: grid;
 `;
+const API_URL = import.meta.env.BACKEND_URL;
+
 async function searchAPI(
   crop,
   variety,
@@ -88,23 +90,20 @@ async function searchAPI(
   let data = {};
   console.log("hello", "yooyo");
   await api
-    .get(
-      `http://localhost:3000/demand/search${type === "" ? "" : `/${type}`}`,
-      {
-        headers: {
-          data: JSON.stringify({
-            crop,
-            variety,
-            price,
-            quantity,
-            preference,
-            duration,
-            PAGE_SIZE: 6,
-            cursors,
-          }),
-        },
+    .get(`${API_URL}/demand/search${type === "" ? "" : `/${type}`}`, {
+      headers: {
+        data: JSON.stringify({
+          crop,
+          variety,
+          price,
+          quantity,
+          preference,
+          duration,
+          PAGE_SIZE: 6,
+          cursors,
+        }),
       },
-    )
+    })
     .then((response) => {
       console.log(response);
       data = response.data;
@@ -134,6 +133,7 @@ function useSearchFilter(initial, setPage, setType) {
 
   return value;
 }
+
 function SearchDemand() {
   const [quantity, setQuantity] = useState([0, 100]);
   const [price, setPrice] = useState(0);
