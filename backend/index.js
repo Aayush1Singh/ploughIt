@@ -62,7 +62,7 @@ const con = mysql.createConnection({
   password: "aayush",
   dateStrings: true,
 });
-console.log("env variables are: ", process.env);
+// console.log("env variables are:",process.env);
 con.connect(function (err) {
   if (err) {
     console.log("error occurred while connecting");
@@ -1859,7 +1859,7 @@ app.get("/makeContract", async (req, res) => {
           time: iso8601,
         },
         headers: {
-          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_API,
+          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_KEY,
         },
       }
     );
@@ -2027,11 +2027,8 @@ app.get("/get-wallet", async (req, res) => {
   }
 });
 app.get("/convertMoney", async (req, res) => {
-  const data = JSON.parse(
-    JSON.stringify("Hello its me : "),
-    JSON.stringify(process.env.COIN_MARKET_KEY)
-  );
-  // console.log(data);
+  const data = JSON.parse(req.headers.data);
+  console.log("hello its me: ", process.env.COIN_MARKET_KEY);
   try {
     const convertercryptoToDollars = await axios.get(
       "https://pro-api.coinmarketcap.com/v2/tools/price-conversion",
@@ -2042,7 +2039,7 @@ app.get("/convertMoney", async (req, res) => {
           convert: "ETH",
         },
         headers: {
-          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_API,
+          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_KEY,
         },
       }
     );
@@ -2071,7 +2068,7 @@ app.get("/convertMoneyRest", async (req, res) => {
           convert: "ETH",
         },
         headers: {
-          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_API,
+          "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_KEY,
         },
       }
     );
