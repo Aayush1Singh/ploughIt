@@ -60,15 +60,15 @@ api.interceptors.response.use(
       error.response.data.message === "Expired" &&
       !originalRequest._retry
     ) {
-      console.log("expired received");
+      // console.log("expired received");
       try {
-        console.log("hello");
+        // console.log("hello");
         const response = await axios
           .get("http://localhost:3000/refresh", {
             withCredentials: true,
           })
           .then((response) => {
-            console.log(response.data);
+            // console.log(response.data);
             if (response.data.accessToken) {
               localStorage.setItem("jwt", response.data.accessToken);
               return api(originalRequest);

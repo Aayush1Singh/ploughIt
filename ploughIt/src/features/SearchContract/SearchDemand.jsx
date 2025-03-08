@@ -179,6 +179,7 @@ function SearchDemand() {
     onSuccess: () => console.log("data fetched"),
     onError: (error) => toast.error("data could not be fetched"),
   });
+  console.log(data);
   useEffect(() => {
     setCursors(data?.cursors);
   }, [data]);

@@ -32,7 +32,7 @@ export function Visual({ data }) {
     setActiveIndex(index);
   };
   if (!data) return null;
-  console.log(data);
+  // console.log(data);
   return (
     <ResponsiveContainer>
       <PieChart

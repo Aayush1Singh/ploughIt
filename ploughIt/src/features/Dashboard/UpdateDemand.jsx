@@ -6,6 +6,7 @@ import { MFormControl, MSlider } from "../makeContract/UploadDemad";
 import styled from "styled-components";
 import axios from "axios";
 import api from "../../services/axiosApi";
+import toast from "react-hot-toast";
 /*price quantity description preference duration */
 const Select = styled.select`
   height: 3rem;
@@ -15,7 +16,7 @@ const Select = styled.select`
 const StyledForm = styled(Form)`
   gap: 2rem;
 `;
-function UpdateDemand({ data, id, updateTempData }) {
+function UpdateDemand({ data, id, updateTempData, setUpdateDisplay }) {
   const { register, formState, handleSubmit } = useForm();
   const { errors } = formState;
 
@@ -33,10 +34,15 @@ function UpdateDemand({ data, id, updateTempData }) {
         headers: { data: JSON.stringify({ ...data, ...data2 }) },
       })
       .then((response) => {
+        toast.success("Updated Successfully");
         console.log(response);
       })
-      .catch((err) => console.log(err));
+      .catch((err) => {
+        toast.error("Could not update");
+        console.log(err);
+      });
     console.log("hellllllllllllllllllllllllllll");
+    setUpdateDisplay(false);
     // set req to update on backend;
   }
   return (

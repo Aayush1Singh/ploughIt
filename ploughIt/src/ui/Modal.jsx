@@ -145,6 +145,7 @@ export function Modal({ data: details, setIsOpen }) {
   });
   async function proposalInsert(data) {
     console.log("gay");
+    data = { ...data, status: "P" };
     const res = await api.get("http://localhost:3000/proposal/insert", {
       headers: { data: JSON.stringify(data) },
     });
@@ -179,7 +180,7 @@ export function Modal({ data: details, setIsOpen }) {
   const queryClient = useQueryClient();
   async function onSubmit(data) {
     console.log(data);
-    console.log(id);
+    console.log(id, details);
     data = {
       ...data,
       farmerID: id,
@@ -296,14 +297,15 @@ export function Modal({ data: details, setIsOpen }) {
             )}
             <FlexIt></FlexIt>
             <Div2>
-              <GreenButton
+              {/* <GreenButton
                 type="button"
                 onClick={(e) => {
+
                   e.preventDefault();
                 }}
               >
                 accept contract
-              </GreenButton>
+              </GreenButton> */}
               {proposal ? (
                 <GreenButton type="submit">Send Proposal</GreenButton>
               ) : (

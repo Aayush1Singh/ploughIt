@@ -22,6 +22,7 @@ function SideBarNav() {
           // }
         >{`Create Demand`}</NavLink>
       )}
+
       {role == "contractor" && (
         <NavLink to="/home/proposals/all" className={styles}>
           {" "}

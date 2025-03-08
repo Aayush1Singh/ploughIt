@@ -15,6 +15,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Table,
 } from "@mui/material";
 import { useSelector } from "react-redux";
 import api from "@/services/axiosApi";
@@ -32,50 +33,50 @@ export const StyledTableRow = styled.div`
     background-color: #eee;
   }
 `;
-export const Table = styled.div`
-  width: 37rem;
-  justify-items: center;
-  max-height: 20rem;
-  overflow: auto;
+// export const Table = styled.div`
+//   width: 37rem;
+//   justify-items: center;
+//   max-height: 20rem;
+//   overflow: auto;
 
-  /* height: 5rem; */
-  border: solid 2px;
-  border-radius: 10px;
-  padding: 3px;
-  &::-webkit-scrollbar {
-    width: 20px;
-  }
-  &::-webkit-scrollbar-track {
-    background-color: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #d6dee1;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #d6dee1;
-    border-radius: 20px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: #d6dee1;
-    border-radius: 20px;
-    border: 6px solid transparent;
-    background-clip: content-box;
-  }
-  &::-webkit-scrollbar-thumb:hover {
-    background-color: #a8bbbf;
-  }
-  div:first-child {
-    position: sticky;
-    top: 0;
-    background-color: #84cc16 !important;
-    border-radius: 10px;
-    font-size: 20px;
-    font-family: "Libre Franklin Variable", sans-serif;
-  }
-  div:first-child {
-    border-top: 0;
-  }
-`;
+//   /* height: 5rem; */
+//   border: solid 2px;
+//   border-radius: 10px;
+//   padding: 3px;
+//   &::-webkit-scrollbar {
+//     width: 20px;
+//   }
+//   &::-webkit-scrollbar-track {
+//     background-color: transparent;
+//   }
+//   &::-webkit-scrollbar-thumb {
+//     background-color: #d6dee1;
+//   }
+//   &::-webkit-scrollbar-thumb {
+//     background-color: #d6dee1;
+//     border-radius: 20px;
+//   }
+//   &::-webkit-scrollbar-thumb {
+//     background-color: #d6dee1;
+//     border-radius: 20px;
+//     border: 6px solid transparent;
+//     background-clip: content-box;
+//   }
+//   &::-webkit-scrollbar-thumb:hover {
+//     background-color: #a8bbbf;
+//   }
+//   div:first-child {
+//     position: sticky;
+//     top: 0;
+//     background-color: #84cc16 !important;
+//     border-radius: 10px;
+//     font-size: 20px;
+//     font-family: "Libre Franklin Variable", sans-serif;
+//   }
+//   div:first-child {
+//     border-top: 0;
+//   }
+// `;
 const dat = { naem: "singh" };
 export const StyledButton = styled.button`
   background-color: transparent;
@@ -146,13 +147,13 @@ export function PartialTableRow({ data, navigate, contractorID }) {
   return (
     <>
       <TableRow
+        className="hover:bg-lime-100"
         key={data.created_at}
         onClick={(e) => {
           e.preventDefault();
           // console.log("hello");
           setIsModal(true);
         }}
-        className="w-full hover:bg-lime-100"
       >
         <TableCell>{data.auto_id}</TableCell>
         <TableCell>{data.crop}</TableCell>
@@ -199,29 +200,31 @@ export function PartialTableRow({ data, navigate, contractorID }) {
 }
 export function PartialTable2({ rows, className }) {
   const navigate = useNavigate();
-  console.log(rows);
+  // console.log(rows);
   return (
     <TableContainer
-      className={`h-full max-w-[613px] overflow-auto rounded-xl border-2 border-blue-500 ${className}`}
+      className={"h-full overflow-auto rounded-xl border-2 border-blue-500"}
     >
-      <TableHead className="w-full border-separate bg-lime-500">
-        {columns.map((column) => (
-          <TableCell key={column.field}>{column.headerName}</TableCell>
-        ))}
-      </TableHead>
-      <TableBody className="w-full">
-        {rows &&
-          rows?.map((data) => {
-            return (
-              <>
-                <PartialTableRow
-                  data={data}
-                  navigate={navigate}
-                ></PartialTableRow>
-              </>
-            );
-          })}
-      </TableBody>
+      <Table className="w-full">
+        <TableHead className="border-separate bg-lime-500">
+          {columns.map((column) => (
+            <TableCell key={column.field}>{column.headerName}</TableCell>
+          ))}
+        </TableHead>
+        <TableBody className="h-9">
+          {rows &&
+            rows?.map((data) => {
+              return (
+                <>
+                  <PartialTableRow
+                    data={data}
+                    navigate={navigate}
+                  ></PartialTableRow>
+                </>
+              );
+            })}
+        </TableBody>
+      </Table>
     </TableContainer>
   );
 }

@@ -17,6 +17,10 @@ import { useSelector } from "react-redux";
 import api from "../../services/axiosApi";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
+// import dotenv from "dotenv";
+// dotenv.config(); // Load Environment Variables
+// console.log(dotenv);
 export const MSlider = styled(Slider)`
   margin-left: 10rem;
   color: green;
@@ -24,23 +28,93 @@ export const MSlider = styled(Slider)`
 export const MFormControl = styled(FormControl)`
   width: 13rem;
 `;
-async function uploadDemand(data) {
-  console.log("heelo2");
-  console.log(data);
-  api
-    .get("http://localhost:3000/demand/insert", { headers: data })
-    .then((response) => {
-      console.log(response.data);
-    })
-    .catch((err) => console.log(err));
-  // if (error) throw new Error(error.message);
-}
+
 function UploadDemand() {
   const { id, role } = useSelector((state) => state.user);
   const queryClient = useQueryClient();
   const [preference, setPreference] = useState("none");
   const { register, handleSubmit, formState } = useForm();
   const navigate = useNavigate();
+  async function makePaymentPrompt(data) {
+    const payData = await api.get("http://localhost:3000/get-wallet");
+    const { address, signature, publicKey } = payData.data;
+    const d2 = await ethers.verifyMessage(address, signature);
+    if (publicKey == d2) {
+      console.log("address verified. ");
+    } else {
+      console.log("address not verified");
+      return;
+    }
+
+    if (typeof window != "undefined" && typeof window.ethereum != "undefined") {
+      try {
+        const accounts = await window.ethereum.request({
+          method: "eth_requestAccounts",
+        });
+        console.log(accounts);
+      } catch (err) {
+        console.log(err.message);
+      }
+    } else {
+      toast.error("install a web3 wallet bro");
+    }
+
+    navigate("/home/showSummary");
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    let convertercryptoToDollars = await api.get(
+      "http://localhost:3000/convertMoney",
+      {
+        headers: { data: JSON.stringify(data) },
+      },
+    );
+
+    convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
+    convertercryptoToDollars = convertercryptoToDollars.data[0].quote.ETH.price;
+    convertercryptoToDollars = parseFloat(convertercryptoToDollars).toFixed(18);
+    convertercryptoToDollars = `0x${ethers.parseEther(convertercryptoToDollars).toString(16)}`;
+    try {
+      const to = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: accounts[0],
+            to: address,
+            value: convertercryptoToDollars,
+          },
+        ],
+      });
+      console.log(to);
+      return to;
+    } catch (err) {
+      console.log(err);
+      return err;
+    }
+  }
+  async function uploadDemand(data) {
+    console.log("heelo2");
+    console.log(data);
+    const res = await makePaymentPrompt(data);
+    console.log("response after transaction", res);
+    if (
+      res?.message ===
+      "MetaMask Tx Signature: User denied transaction signature."
+    ) {
+      toast.error("failed transaction");
+      navigate("/home");
+      return;
+    }
+    api
+      .get("http://localhost:3000/demand/insert", {
+        headers: { data: JSON.stringify(data), res },
+      })
+      .then((response) => {
+        console.log(response.data);
+      })
+      .catch((err) => console.log(err));
+    // if (error) throw new Error(error.message);
+  }
   const { errors } = formState;
   console.log(!!errors.variety);
   const { mutate, isLoading } = useMutation({
@@ -181,7 +255,7 @@ function UploadDemand() {
           />
         </FormRow>
         <FormRow>
-          <GreenButton type="submit">Submit</GreenButton>
+          <GreenButton type="submit">Upload demand</GreenButton>
         </FormRow>
         <input type="hidden" defaultValue={id} {...register("id")}></input>
       </Form>

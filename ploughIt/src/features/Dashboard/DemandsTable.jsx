@@ -199,12 +199,12 @@ const useStyles = makeStyles({
   },
 });
 export function DemandsTable({ rows, contractorID }) {
-  console.log(rows);
+  // console.log(rows);
   const navigate = useNavigate();
 
   return (
-    <TableContainer className="h-full max-w-fit overflow-auto rounded-xl border-2 border-blue-500">
-      <Table>
+    <TableContainer className="h-full w-full overflow-auto rounded-xl border-2 border-blue-500">
+      <Table className="w-full">
         <TableHead className="border-separate bg-lime-500">
           {columns.map((column) => (
             <TableCell key={column.field + Math.random()}>

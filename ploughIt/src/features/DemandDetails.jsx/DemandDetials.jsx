@@ -15,6 +15,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import toast from "react-hot-toast";
 const Table = styled.div``;
 const TableRows = styled.div`
   //farmerID Price Duration Time
@@ -134,16 +135,19 @@ const ContentDiv = function ({ data }) {
             data={oData}
             id={contractorID}
             updateTempData={setData}
+            setUpdateDisplay={setUpdate}
           ></UpdateDemand>
         </Modal2>
       )}
     </div>
   );
 };
-function TableRow2({ data }) {
+function TableRow2({ data ,navigate}) {
   console.log(data);
   const [sureModel, setSureModel] = useState(false);
+  const [rejected, setRejected] = useState(data.status == "R" ? true : false);
   if (!data) return;
+  if (rejected) return null;
   return (
     <>
       <TableRow
@@ -164,21 +168,49 @@ function TableRow2({ data }) {
           >
             Accept
           </StyledButton>
-          <StyledButton variation={"reject"}>Reject</StyledButton>
+          <StyledButton
+            variation={"reject"}
+            onClick={(e) => {
+              api.get("http://localhost:3000/proposal/reject", {
+                headers: { data: JSON.stringify(data) },
+              });
+              toast.success("proposal rejected");
+              setRejected(true);
+            
+            }}
+          >
+            Reject
+          </StyledButton>
         </TableCell>
         {sureModel && (
           <Modal2 setIsOpen={setSureModel}>
             <div>
-              <p>are you sure?</p>
+              <p>Are you sure?</p>
               <StyledButton
                 variation={"accept"}
                 onClick={() => {
+
                   api.get(
                     `http://localhost:3000/proposal/accepted/${data.demandID}`,
                     {
                       headers: { proposal: JSON.stringify(data) },
                     },
-                  );
+                  ).then((res)=>{
+                    console.log(res);
+                    toast.error('inida');
+                    if(res.data.status=='failed'){
+                      toast.error(res?.response.data.message || 'could not make contracct due to insufficient funds');
+                      setSureModel(false);
+
+                    }
+                    else{
+                      toast.success('Proposal accepted and contract made');
+                      navigate('/home/dashboard');
+    
+                    }
+                  });
+                  
+                  
                 }}
               >
                 Yes
@@ -234,9 +266,17 @@ function DemandDetials() {
             ))}
           </TableHead>
           <TableBody className="h-9">
-            {proposals.map((proposal) => (
-              <TableRow2 data={proposal} key={proposal.created_at}></TableRow2>
-            ))}
+            {proposals.map((proposal) => {
+              if (proposal.status == "R") return null;
+
+              return (
+                <TableRow2
+                  data={proposal}
+                  navigate={navigate}
+                  key={proposal.created_at}
+                ></TableRow2>
+              );
+            })}
           </TableBody>
         </TableContainer>
       </div>

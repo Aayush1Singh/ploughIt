@@ -6,7 +6,7 @@ import Modal2 from "./Modal2";
 import { PartialTable2 } from "./PartialTable";
 import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import OngoingDemands from "./OngoingDemands";
+import OngoingContracts from "./OngoingContracts";
 import { Visual } from "./Visual";
 import ProposalsTable from "./ProposalsTable";
 export default function Dashboard() {
@@ -28,6 +28,12 @@ export default function Dashboard() {
     });
     return data;
   }
+  async function ongoingDemands() {
+    const data = await api.get(`http://localhost:3000/${role}/demand/ongoing`, {
+      headers: { data: JSON.stringify({ id }) },
+    });
+    return data;
+  }
   async function proposals() {
     const data = await api.get(`http://localhost:3000/${role}/proposals`, {
       headers: { data: JSON.stringify({ id }) },
@@ -37,6 +43,11 @@ export default function Dashboard() {
   const { data: resultPartialDemands, isLoading: loaderPartial } = useQuery({
     queryFn: partialDemands,
     queryKey: ["partial", { id, role }],
+    staleTime: Infinity,
+  });
+  const { data: resultOngoingDemands, isLoading: loaderOngoing } = useQuery({
+    queryFn: ongoingDemands,
+    queryKey: ["ongoing", { id, role }],
     staleTime: Infinity,
   });
   const { data: resultPendingDemands, isLoading: loaderDemands } = useQuery({
@@ -50,11 +61,11 @@ export default function Dashboard() {
     staleTime: Infinity,
   });
   useEffect(() => {
-    console.log(resultProposalsData);
+    // console.log(resultProposalsData);
     if (resultProposalsData instanceof Error) {
       toast.error(resultProposalsData.message);
     } else {
-      console.log(resultProposalsData);
+      // console.log(resultProposalsData);
       setProposalData(resultProposalsData?.data?.result);
     }
   }, [resultProposalsData, loaderProposals]);
@@ -66,7 +77,14 @@ export default function Dashboard() {
     }
   }, [resultPendingDemands, loaderDemands]);
   useEffect(() => {
-    console.log(resultPartialDemands);
+    if (resultOngoingDemands instanceof Error) {
+      toast.error(resultOngoingDemands.message);
+    } else {
+      setOngoingData(resultOngoingDemands?.data);
+    }
+  }, [resultOngoingDemands, loaderOngoing]);
+  useEffect(() => {
+    // console.log(resultPartialDemands);
     if (resultPartialDemands instanceof Error) {
       toast.error(resultPartialDemands.message);
     } else {
@@ -95,7 +113,7 @@ export default function Dashboard() {
     [ongoingData],
   );
   const pieData = useMemo(() => {
-    console.log(pendingValue);
+    // console.log(pendingValue);
     return [
       { name: "Pending", value: pendingValue },
       { name: "Partial", value: partialValue },
@@ -122,7 +140,7 @@ export default function Dashboard() {
       {partialData && (
         <PartialTable2 rows={partialData} className=""></PartialTable2>
       )}
-      <OngoingDemands></OngoingDemands>
+      <OngoingContracts rows={ongoingData} contractorID={id}></OngoingContracts>
     </div>
   );
 }
