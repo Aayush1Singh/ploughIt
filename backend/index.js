@@ -38,7 +38,7 @@ const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
   origin:
-    "https://plough-it-4hxr-m30htylc8-aayushs-projects-977fe149.vercel.app/",
+    "https://plough-it-4hxr-m30htylc8-aayushs-projects-977fe149.vercel.app",
   credentials: true,
   // "access-control-allow-origin": true,
   methods: ["GET", "POST", "PUT", "DELETE"],
