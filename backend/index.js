@@ -37,7 +37,7 @@ const farmingFactory = new ethers.Contract(
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
-  origin: "http://localhost:5173",
+  origin: "https://plough-it-4hxr.vercel.app",
   credentials: true,
   // "access-control-allow-origin": true,
   methods: ["GET", "POST", "PUT", "DELETE"],
