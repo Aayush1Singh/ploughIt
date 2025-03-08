@@ -161,7 +161,11 @@ app.get("/signin", async (req, res) => {
           jwtSecret,
           { expiresIn: 1000 * 60 * 60 * 24 }
         );
-        res.cookie("refreshToken", refreshToken);
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true, // Prevents client-side JavaScript from accessing it
+          secure: true, // Required for HTTPS
+          sameSite: "None", // Allows cross-site cookie sharing
+        });
         res.status(200).send({
           accessToken,
           id:
@@ -1002,12 +1006,10 @@ app.get("/refresh", async (req, res) => {
   } catch (error) {
     // console.log("yolo");
     // console.log(error);
-    res
-      .status(400)
-      .send({
-        status: "failed",
-        message: `ExpiredRefresh ${JSON.stringify(req.cookies)}`,
-      });
+    res.status(400).send({
+      status: "failed",
+      message: `ExpiredRefresh ${JSON.stringify(req.cookies)}`,
+    });
     return;
   }
   // console.log(decoded);
