@@ -1004,7 +1004,7 @@ app.get("/refresh", async (req, res) => {
     // console.log(error);
     res
       .status(400)
-      .send({ status: "failed", message: `ExpiredRefresh ${refreshToken}` });
+      .send({ status: "failed", message: `ExpiredRefresh ${req.cookies}` });
     return;
   }
   // console.log(decoded);
