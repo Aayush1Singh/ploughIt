@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
+import "@openzeppelin/contracts/proxy/Clones.sol"; 
 contract FarmingContractT2 {
     enum Status { Created, Accepted, Completed, Cancelled }
     address contractor;
@@ -8,6 +8,8 @@ contract FarmingContractT2 {
     bool approveC;
     uint balance;
     uint public startDate;
+    bool isInitialized;
+    uint256 amount;
     struct  terms{
     address owner;
     string  variation;
@@ -21,7 +23,8 @@ contract FarmingContractT2 {
     }
     terms public contractDetails;
     event EarnestDeposited(address indexed from, uint256 amount);
-    constructor(address _farmer,address _contractor,string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID) {
+     function initialize(address _farmer,address _contractor,string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID,uint256 _amount) public {
+       require(!isInitialized, "Already initialized");
       contractDetails.owner=msg.sender;
       contractDetails.crop=_crop;
       contractDetails.quantity=_quantity;
@@ -35,6 +38,8 @@ contract FarmingContractT2 {
       contractor=_contractor;
       approveC=false;
       startDate=block.timestamp;
+      isInitialized=true;
+      amount=_amount;
     }
     function sendMoneyFarmer()  private  {
       require(approveC==true,'Not authorised');
@@ -51,6 +56,7 @@ contract FarmingContractT2 {
     }     
     function approveContractor() public {
       require(msg.sender==contractor,'You are not authorised');
+      require(amount<=address(this).balance,'Total Contract amount not deposited');
       require(approveC==false,'Already approved');
       approveC=true;
       sendMoneyFarmer();
@@ -63,11 +69,8 @@ contract FarmingContractT2 {
 
     }
     receive() external payable {
-      // require(msg.sender==contractor,'You are not authorised');
       balance+=msg.value;
     }
-
-   
     function updateStatus(bool status) public{
       contractDetails.isCompleted=status;
     }

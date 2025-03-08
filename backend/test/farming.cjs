@@ -4,21 +4,43 @@ const { expect } = chai;
 require("@nomicfoundation/hardhat-ethers");
 describe("FarmingContract Deployment", function () {
   let contract;
-  let contractor, farmer, admin, server;
+  let contractor, farmer, admin, server1, server;
   let res;
-  let FarmingFactory, farmingFactory;
+  let FarmingFactory, farmingFactory, farmingContractT2, farmingContract;
   beforeEach(async function () {
-    const signers = await ethers.getSigners();
-    contractor = signers[0];
+    const [server1] = await hre.ethers.getSigners();
+    // console.log("hello", await hre.ethers.getSigners());
+    // List of server wallet addresses
+    contractor = farmer = admin = server = server1;
+    const allowedServers = [server1.address];
 
-    farmer = signers[1];
-    admin = signers[2];
-    server = signers[3];
-    FarmingFactory = await ethers.getContractFactory("FarmingFactory");
-    farmingFactory = await FarmingFactory.deploy([server]);
+    console.log(
+      "Deploying FarmingFactory with allowed servers:",
+      allowedServers
+    );
+    const FarmingContract = await ethers.getContractFactory("FarmingContract");
+    farmingContract = await FarmingContract.deploy();
+    const FarmingContractT2 = await ethers.getContractFactory(
+      "FarmingContractT2"
+    );
+    farmingContractT2 = await FarmingContractT2.deploy();
+    // console.log(farmingContractT2.target);
+    // console.log(farmingContract.target);
+    // Deploy FarmingFactory with allowed server wallets
+    const FarmingFactory = await hre.ethers.getContractFactory(
+      "FarmingFactory"
+    );
+    farmingFactory = await FarmingFactory.deploy(
+      allowedServers,
+      farmingContract.target,
+      farmingContractT2.target
+    );
+
     await farmingFactory.waitForDeployment();
-    const bal = await contractor.provider.getBalance(contractor.address);
-    console.log("FarmingFactory deployed at:", farmingFactory.target);
+    // console.log("FarmingFactory deployed at:", farmingFactory.target);
+    // console.log(
+    //   await farmingFactory.interface.getFunction("createFarmingContractT2")
+    // );
   });
   it("should deposit earnest", async function () {
     const depositAmount = ethers.parseEther("4");
@@ -58,6 +80,8 @@ describe("FarmingContract Deployment", function () {
         2,
         10
       );
+    tx = await farmingFactory.getDetails(0);
+    console.log(tx);
   });
   it("should deposit rest of money", async function () {
     const depositAmount = ethers.parseEther("4");

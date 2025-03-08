@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-
+import "@openzeppelin/contracts/proxy/Clones.sol"; 
 contract FarmingContract {
-    enum Status { Created, Accepted, Completed, Cancelled }
+    bool isInitialized;
     struct  terms{
     address owner;
     string  variation;
@@ -16,17 +16,8 @@ contract FarmingContract {
     uint256  contractorID;    
     }
     terms public contractDetails;
-/**    address owner;
-    string public variation; 
-    string public crop; 
-    uint256 public quantity;
-    uint256 public pricePerUnit;
-    uint256 public startDate;
-    uint256 public duration;
-    bool public isCompleted;
-    uint256 public farmerID;
-    uint256 public contractorID; */
-    constructor(string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID) {
+     function initialize(string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID) public {
+        require(!isInitialized, "Already initialized");
         contractDetails.owner=msg.sender;
         contractDetails.crop=_crop;
         contractDetails.quantity=_quantity;
@@ -37,6 +28,7 @@ contract FarmingContract {
         contractDetails.contractorID=_contractorID;
         contractDetails.isCompleted=false;
         contractDetails.startDate=block.timestamp;
+        isInitialized=true;
     }
     function updateStatus(bool status) public{
         contractDetails.isCompleted=status;
