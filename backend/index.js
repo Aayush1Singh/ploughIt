@@ -62,6 +62,7 @@ const con = mysql.createConnection({
   password: "aayush",
   dateStrings: true,
 });
+console.log("env variables are: ", process.env);
 con.connect(function (err) {
   if (err) {
     console.log("error occurred while connecting");
