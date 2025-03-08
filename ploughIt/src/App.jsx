@@ -8,7 +8,7 @@ import SearchDemand from "./features/SearchContract/SearchDemand";
 import { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import Login from "./pages/login";
+import Login from "./pages/Login";
 import Modal from "./ui/Modal";
 import OngoingContractDetails from "./features/Dashboard/OngoingContractDetails";
 // import { ProtectRoutes } from "./pages/ProtectRoutes";
