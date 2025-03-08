@@ -63,13 +63,13 @@ const con = mysql.createConnection({
   dateStrings: true,
 });
 // console.log("env variables are:",process.env);
-con.connect(function (err) {
-  if (err) {
-    console.log("error occurred while connecting");
-  } else {
-    console.log("connection created with mysql successfully");
-  }
-});
+// con.connect(function (err) {
+//   if (err) {
+//     console.log("error occurred while connecting");
+//   } else {
+//     console.log("connection created with mysql successfully");
+//   }
+// });
 const verifyJwt = (req, res, next) => {
   const nonSecurePaths = [
     "/signin",
