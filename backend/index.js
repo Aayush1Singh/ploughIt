@@ -2027,7 +2027,10 @@ app.get("/get-wallet", async (req, res) => {
   }
 });
 app.get("/convertMoney", async (req, res) => {
-  const data = JSON.parse("Hello its me : ", process.env.COIN_MARKET_KEY);
+  const data = JSON.parse(
+    JSON.stringify("Hello its me : "),
+    JSON.stringify(process.env.COIN_MARKET_KEY)
+  );
   // console.log(data);
   try {
     const convertercryptoToDollars = await axios.get(
