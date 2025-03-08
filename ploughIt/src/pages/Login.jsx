@@ -20,7 +20,8 @@ const Background = styled.div`
   align-items: center;
   justify-content: center;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+console.log(API_URL);
 function Login() {
   const dispatch = useDispatch();
   const QueryClient = useQueryClient();

@@ -33,7 +33,7 @@ export const StyledTableRow = styled.div`
     background-color: #eee;
   }
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 // export const Table = styled.div`
 //   width: 37rem;

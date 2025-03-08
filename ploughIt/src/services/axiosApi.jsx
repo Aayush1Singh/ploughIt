@@ -5,7 +5,7 @@ const api = axios.create({
   // baseURL: "http://localhost:3000", // Replace with your backend URL
   withCredentials: true, // Include cookies with requests if necessary
 });
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Request Interceptor for attaching token
 api.interceptors.request.use((config) => {

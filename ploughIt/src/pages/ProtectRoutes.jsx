@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/axiosApi";
 import { useDispatch } from "react-redux";
 import { logIn } from "./userSlice";
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const ProtectRoutes = ({ children }) => {
   const navigate = useNavigate();

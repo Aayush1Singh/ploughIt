@@ -74,7 +74,7 @@ const DemandWindow = styled.div`
   grid-template-columns: 1fr 1fr 1fr;
   display: grid;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 async function searchAPI(
   crop,

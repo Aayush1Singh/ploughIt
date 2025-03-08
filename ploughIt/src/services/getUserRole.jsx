@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { logIn } from "../pages/userSlice";
 import { useDispatch } from "react-redux";
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 function useUserRole() {
   const dispatch = useDispatch();

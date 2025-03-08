@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import OngoingContracts from "./OngoingContracts";
 import { Visual } from "./Visual";
 import ProposalsTable from "./ProposalsTable";
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Dashboard() {
   const { role, id, email } = useSelector((state) => state.user);

@@ -35,7 +35,7 @@ const StyledTableHead = styled.div`
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const TableHeadT = function () {
   return (

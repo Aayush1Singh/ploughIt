@@ -36,7 +36,7 @@ const StyledDiv = styled.div`
   font-size: 20px;
   gap: 1rem;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 // function TableRow({ data }) {
 //   const [isOpen, setOpenModal] = useState(false);

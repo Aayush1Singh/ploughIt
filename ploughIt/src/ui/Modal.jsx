@@ -111,7 +111,7 @@ const Textarea = styled.textarea`
   max-height: 4rem;
   min-height: 4rem;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function ContentRow({ rowName, content, suffix }) {
   return (

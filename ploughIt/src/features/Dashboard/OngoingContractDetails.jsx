@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { StyledButton } from "./DemandsTable";
 import api from "@/services/axiosApi";
 import { ethers } from "ethers";
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const FARMING_CONTRACT_T2_ABI = [
   {

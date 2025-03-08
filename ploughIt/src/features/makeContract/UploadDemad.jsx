@@ -28,7 +28,7 @@ export const MSlider = styled(Slider)`
 export const MFormControl = styled(FormControl)`
   width: 13rem;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 function UploadDemand() {
   const { id, role } = useSelector((state) => state.user);

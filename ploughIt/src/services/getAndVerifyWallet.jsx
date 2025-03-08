@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import api from "./axiosApi";
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const getAndVerifyContract = async () => {
   try {

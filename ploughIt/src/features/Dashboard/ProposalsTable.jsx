@@ -38,7 +38,7 @@ export const StyleStatus = styled.span`
       color: var(--color-green-500);
     `}
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 function TableRow2({ data, farmerID }) {
   console.log(data);

@@ -16,7 +16,7 @@ const Select = styled.select`
 const StyledForm = styled(Form)`
   gap: 2rem;
 `;
-const API_URL = import.meta.env.BACKEND_URL;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 function UpdateDemand({ data, id, updateTempData, setUpdateDisplay }) {
   const { register, formState, handleSubmit } = useForm();
