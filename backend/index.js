@@ -1002,7 +1002,9 @@ app.get("/refresh", async (req, res) => {
   } catch (error) {
     // console.log("yolo");
     // console.log(error);
-    res.status(400).send({ status: "failed", message: "ExpiredRefresh" });
+    res
+      .status(400)
+      .send({ status: "failed", message: `ExpiredRefresh ${refreshToken}` });
     return;
   }
   // console.log(decoded);
