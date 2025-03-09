@@ -1886,7 +1886,11 @@ app.get("/getContractAddress", async (req, res) => {
       process.env.T2_CONTRACT_ABI,
       provider
     );
-
+    res.send({
+      contractAddress: tx,
+      message: "successfully accessed",
+      status: "success",
+    });
     contract.on(
       "ContractApproved",
       async (contractAddress, farmer, contractor) => {
@@ -1917,11 +1921,6 @@ app.get("/getContractAddress", async (req, res) => {
       }
     ); //
     // console.log(tx);
-    res.send({
-      contractAddress: tx,
-      message: "successfully accessed",
-      status: "success",
-    });
   } catch (err) {
     console.log(err);
   }
