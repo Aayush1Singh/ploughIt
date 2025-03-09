@@ -107,7 +107,6 @@ const ContentDiv = function ({ data }) {
   // console.log(oriData);
 
   console.log(oData);
-  useEffect(() => {}, [update]);
   return (
     <div className="m-0 p-0">
       <MainHead>{`Details`}</MainHead>
