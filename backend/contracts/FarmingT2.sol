@@ -22,6 +22,7 @@ contract FarmingContractT2 {
     uint256  contractorID;    
     }
     terms public contractDetails;
+    event ContractApproved(address indexed contractAddress, address indexed contractor, address indexed farmer);
     event EarnestDeposited(address indexed from, uint256 amount);
      function initialize(address _farmer,address _contractor,string memory _crop,string memory _variation,uint _duration,uint _price,uint _quantity,uint _farmerID,uint _contractorID,uint256 _amount) public {
        require(!isInitialized, "Already initialized");
@@ -60,6 +61,7 @@ contract FarmingContractT2 {
       require(approveC==false,'Already approved');
       approveC=true;
       sendMoneyFarmer();
+      emit ContractApproved(address(this),contractor,farmer);
     }
     function resolveIssue(bool status) public {
       require(msg.sender==contractDetails.owner,'You are not authorised');

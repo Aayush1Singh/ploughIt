@@ -1881,7 +1881,41 @@ app.get("/getContractAddress", async (req, res) => {
     demandNo = Number(demandNo);
     // console.log(demandNo);
     const tx = await farmingFactory.getContractAddress(demandNo);
-    //
+    const contract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      process.env.T2_CONTRACT_ABI,
+      provider
+    );
+
+    contract.on(
+      "ContractApproved",
+      async (contractAddress, farmer, contractor) => {
+        console.log(`Contract ${contractAddress} completed by ${contractor}`);
+
+        // Update database
+        const {
+          data: { farmerID, contractorID },
+        } = supabase
+          .from("ongoingContracts")
+          .select("*")
+          .eq("contractID", demandNo);
+        await supabase
+          .from("ongoingContracts")
+          .delete()
+          .eq("contractID", demandNo);
+        await supabase
+          .from("archiveContracts")
+          .insert([
+            {
+              contractID: demandNo,
+              contractorID,
+              farmerID,
+              contract_address: contractAddress,
+            },
+          ])
+          .select();
+      }
+    ); //
     // console.log(tx);
     res.send({
       contractAddress: tx,
