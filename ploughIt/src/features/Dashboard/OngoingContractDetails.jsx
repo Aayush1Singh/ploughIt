@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { StyledButton } from "./DemandsTable";
 import api from "@/services/axiosApi";
@@ -101,6 +101,7 @@ const FARMING_CONTRACT_T2_ABI = [
 ];
 function OngoingDemandDetails() {
   const [hasFetchedAddr, setGetAddr] = useState(false);
+  const [pendingActions, setPendingActions] = useState(null);
   const { state } = useLocation();
   async function getContractDetails() {
     const resp = await api.get(`${API_URL}/contract/${state.contractID}`);
@@ -210,8 +211,9 @@ function OngoingDemandDetails() {
       completeContract(cachedAddr); // Use cached data instead of waiting for refetch
     } else {
       setGetAddr(true);
-      while (fetchStatus == "fetching");
-      completeContract(data);
+      setPendingActions("completeContract");
+      // while (fetchStatus == "fetching");
+      // completeContract(data);
     }
   }
   async function handlePayRest() {
@@ -224,10 +226,17 @@ function OngoingDemandDetails() {
       payRest(cachedAddr); // Use cached data instead of waiting for refetch
     } else {
       setGetAddr(true);
-      while (fetchStatus == "fetching");
-      await payRest(data);
+      setPendingActions("payRest");
+      // await payRest(data);
     }
   }
+  useEffect(() => {
+    if (data && pendingActions == "payRest") {
+      payRest(data);
+    } else if (data && pendingActions == "completeContracct") {
+      completeContract(data);
+    }
+  }, [pendingActions, data]);
   console.log(state);
   return (
     <div>
