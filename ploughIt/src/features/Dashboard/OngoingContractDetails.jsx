@@ -132,12 +132,13 @@ const ContentDiv = function ({ data }) {
   // console.log(oriData);
   setData(data);
   console.log(oData);
+  if (!oData) return null;
   return (
     <div className="m-0 p-0">
       <MainHead>{`Details`}</MainHead>
       <ContentRow rowName={"Crop"} content={oData[0]}></ContentRow>{" "}
       <ContentRow rowName={"Variety"} content={oData[1]}></ContentRow>{" "}
-      <ContentRow rowName={"Price"} content={oData.price}></ContentRow>{" "}
+      <ContentRow rowName={"Price"} content={oData[2]}></ContentRow>{" "}
       {/* <ContentRow
         rowName={"Preference"}
         content={oData.preference}
