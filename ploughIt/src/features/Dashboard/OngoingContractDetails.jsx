@@ -105,10 +105,9 @@ const FARMING_CONTRACT_T2_ABI = [
 const ContentDiv = function ({ data }) {
   const [oData, setData] = useState(data || {});
   // console.log(oriData);
+
   console.log(oData);
-  const [update, setUpdate] = useState(false);
   useEffect(() => {}, [update]);
-  const contractorID = useSelector((state) => state.user.id);
   return (
     <div className="m-0 p-0">
       <MainHead>{`Details`}</MainHead>
@@ -125,16 +124,6 @@ const ContentDiv = function ({ data }) {
       ></ContentRow>{" "}
       <ContentRow rowName={"Duration"} content={oData.duration}></ContentRow>{" "}
       <ContentRow rowName={"Quantity"} content={oData.quantity}></ContentRow>{" "}
-      <StyledButton
-        className="rounded-full p-3 hover:bg-green-300"
-        variation="accept"
-        onClick={() => setUpdate(true)}
-      >
-        Update
-      </StyledButton>
-      <StyledButton variation="reject" onClick={() => {}}>
-        delete
-      </StyledButton>
     </div>
   );
 };
@@ -279,7 +268,7 @@ function OngoingDemandDetails() {
   console.log(state);
   return (
     <>
-      <ContentDiv data={data}></ContentDiv>
+      <ContentDiv data={contractData}></ContentDiv>
       <div>
         <StyledButton
           variation="accept"
