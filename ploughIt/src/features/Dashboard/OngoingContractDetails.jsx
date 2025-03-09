@@ -192,7 +192,7 @@ function OngoingDemandDetails() {
     });
     return response;
   }
-  const { data } = useQuery({
+  const { data, fetchStatus } = useQuery({
     queryKey: ["contractAddress", state.contractID],
     queryFn: getContractAddress,
     staleTime: Infinity,
@@ -210,6 +210,7 @@ function OngoingDemandDetails() {
       completeContract(cachedAddr); // Use cached data instead of waiting for refetch
     } else {
       setGetAddr(true);
+      while (fetchStatus == "fetching");
       completeContract(data);
     }
   }
