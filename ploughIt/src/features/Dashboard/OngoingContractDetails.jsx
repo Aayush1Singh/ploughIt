@@ -13,6 +13,31 @@ const FARMING_CONTRACT_T2_ABI = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "contractAddress",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "contractor",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "farmer",
+        type: "address",
+      },
+    ],
+    name: "ContractApproved",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
       { indexed: true, internalType: "address", name: "from", type: "address" },
       {
         indexed: false,
@@ -105,24 +130,21 @@ const FARMING_CONTRACT_T2_ABI = [
 const ContentDiv = function ({ data }) {
   const [oData, setData] = useState(data || {});
   // console.log(oriData);
-
+  setData(data.data.result);
   console.log(oData);
   return (
     <div className="m-0 p-0">
       <MainHead>{`Details`}</MainHead>
-      <ContentRow rowName={"Crop"} content={oData.crop}></ContentRow>{" "}
-      <ContentRow rowName={"Variety"} content={oData.variety}></ContentRow>{" "}
+      <ContentRow rowName={"Crop"} content={oData[0]}></ContentRow>{" "}
+      <ContentRow rowName={"Variety"} content={oData[1]}></ContentRow>{" "}
       <ContentRow rowName={"Price"} content={oData.price}></ContentRow>{" "}
-      <ContentRow
-        rowName={"Description"}
-        content={oData.description}
-      ></ContentRow>{" "}
-      <ContentRow
+      {/* <ContentRow
         rowName={"Preference"}
         content={oData.preference}
-      ></ContentRow>{" "}
-      <ContentRow rowName={"Duration"} content={oData.duration}></ContentRow>{" "}
-      <ContentRow rowName={"Quantity"} content={oData.quantity}></ContentRow>{" "}
+      ></ContentRow>{" "} */}
+      <ContentRow rowName={"Duration"} content={oData[4]}></ContentRow>{" "}
+      <ContentRow rowName={"Quantity"} content={oData[3]}></ContentRow>{" "}
+      <ContentRow rowName={"Price"} content={oData[1]}></ContentRow>{" "}
     </div>
   );
 };
