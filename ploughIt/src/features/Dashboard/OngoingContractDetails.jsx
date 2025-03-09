@@ -128,9 +128,9 @@ const FARMING_CONTRACT_T2_ABI = [
   { stateMutability: "payable", type: "receive" },
 ];
 const ContentDiv = function ({ data }) {
-  const [oData, setData] = useState(data || {});
+  const [oData, setData] = useState(data?.data?.result || {});
   // console.log(oriData);
-  setData(data.data.result);
+  setData(data?.data?.result);
   console.log(oData);
   return (
     <div className="m-0 p-0">
