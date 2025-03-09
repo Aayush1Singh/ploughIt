@@ -290,7 +290,7 @@ function OngoingDemandDetails() {
   console.log(state);
   return (
     <>
-      <ContentDiv data={contractData}></ContentDiv>
+      {/* <ContentDiv data={contractData}></ContentDiv> */}
       <div>
         <StyledButton
           variation="accept"
