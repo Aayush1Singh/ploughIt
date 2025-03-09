@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { StyledButton } from "./DemandsTable";
 import api from "@/services/axiosApi";
 import { ethers } from "ethers";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const FARMING_CONTRACT_T2_ABI = [
@@ -99,15 +100,24 @@ const FARMING_CONTRACT_T2_ABI = [
   { stateMutability: "payable", type: "receive" },
 ];
 function OngoingDemandDetails() {
+  const [hasFetchedAddr, setGetAddr] = useState(false);
   const { state } = useLocation();
-  api.get(`${API_URL}/contract/${state.contractID}`).then((res) => {
-    console.log(res);
+  async function getContractDetails() {
+    const resp = await api.get(`${API_URL}/contract/${state.contractID}`);
+    console.log(resp);
+    return resp;
+  }
+  const { data: contractData } = useQuery({
+    queryKey: ["contractDetails", state.contractoID],
+    queryFn: getContractDetails,
+    staleTime: Infinity,
   });
-  async function completeContract() {
+
+  async function completeContract(response) {
     try {
-      const response = await api.get(`${API_URL}/getContractAddress`, {
-        headers: { contractID: state.contractID },
-      });
+      // const response = await api.get(`${API_URL}/getContractAddress`, {
+      //   headers: { contractID: state.contractID },
+      // });
       console.log(response);
       const addressDest = response.data.contractAddress;
       await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -132,7 +142,8 @@ function OngoingDemandDetails() {
       console.log("due to complete contract ", err);
     }
   }
-  async function payRest() {
+
+  async function payRest(response) {
     let convertercryptoToDollars = await api.get(
       `${API_URL}/convertMoneyRest`,
       {
@@ -140,10 +151,11 @@ function OngoingDemandDetails() {
       },
     );
     console.log(convertercryptoToDollars);
-    const response = await api.get(`${API_URL}/getContractAddress`, {
-      headers: { contractID: state.contractID },
-    });
-    console.log(response);
+
+    // const response = await api.get(`${API_URL}/getContractAddress`, {
+    //   headers: { contractID: state.contractID },
+    // });
+    // console.log(response);
     const addressDest = response.data.contractAddress;
 
     convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
@@ -174,14 +186,53 @@ function OngoingDemandDetails() {
     }
     // console.log(JSON.parse(res.data.data).data[0].quote.ETH.price);
   }
+  async function getContractAddress() {
+    const response = await api.get(`${API_URL}/getContractAddress`, {
+      headers: { contractID: state.contractID },
+    });
+    return response;
+  }
+  const { data } = useQuery({
+    queryKey: ["contractAddress", state.contractID],
+    queryFn: getContractAddress,
+    staleTime: Infinity,
+    enabled: hasFetchedAddr,
+  });
+  const queryClient = useQueryClient();
 
+  function handleCompleteContract() {
+    const cachedAddr = queryClient.getQueryData([
+      "contractAddress",
+      state.contractID,
+    ]);
+
+    if (cachedAddr) {
+      completeContract(cachedAddr); // Use cached data instead of waiting for refetch
+    } else {
+      setGetAddr(true);
+      completeContract(data);
+    }
+  }
+  async function handlePayRest() {
+    const cachedAddr = queryClient.getQueryData([
+      "contractAddress",
+      state.contractID,
+    ]);
+
+    if (cachedAddr) {
+      payRest(cachedAddr); // Use cached data instead of waiting for refetch
+    } else {
+      setGetAddr(true);
+      await payRest(data);
+    }
+  }
   console.log(state);
   return (
     <div>
       <StyledButton
         variation="accept"
         onClick={(e) => {
-          payRest();
+          handlePayRest();
         }}
       >
         Pay Rest Amount
@@ -189,7 +240,7 @@ function OngoingDemandDetails() {
       <StyledButton
         variation="accept"
         onClick={(e) => {
-          completeContract();
+          handleCompleteContract();
         }}
       >
         Complete Contract

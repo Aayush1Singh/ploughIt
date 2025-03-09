@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import OngoingContracts from "./OngoingContracts";
 import { Visual } from "./Visual";
 import ProposalsTable from "./ProposalsTable";
+import Loader from "@/ui/Loader";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Dashboard() {
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [partialData, setPartialData] = useState([]);
   const [ongoingData, setOngoingData] = useState([]);
   const [proposalData, setProposalData] = useState([]);
+  const [isLoading, setLoading] = useState(false);
   async function demandFn() {
     const data = await api.get(`${API_URL}/${role}/demand/pending`, {
       headers: { data: JSON.stringify({ id }) },
@@ -42,22 +44,22 @@ export default function Dashboard() {
     });
     return data;
   }
-  const { data: resultPartialDemands, isLoading: loaderPartial } = useQuery({
+  const { data: resultPartialDemands, fetchStatus: loaderPartial } = useQuery({
     queryFn: partialDemands,
     queryKey: ["partial", { id, role }],
     staleTime: Infinity,
   });
-  const { data: resultOngoingDemands, isLoading: loaderOngoing } = useQuery({
+  const { data: resultOngoingDemands, fetchStatus: loaderOngoing } = useQuery({
     queryFn: ongoingDemands,
     queryKey: ["ongoing", { id, role }],
     staleTime: Infinity,
   });
-  const { data: resultPendingDemands, isLoading: loaderDemands } = useQuery({
+  const { data: resultPendingDemands, fetchStatus: loaderDemands } = useQuery({
     queryFn: demandFn,
     queryKey: ["demands", { id, role }],
     staleTime: Infinity,
   });
-  const { data: resultProposalsData, isLoading: loaderProposals } = useQuery({
+  const { data: resultProposalsData, fetchStatus: loaderProposals } = useQuery({
     queryFn: proposals,
     queryKey: ["proposals", { id, role }],
     staleTime: Infinity,
@@ -122,14 +124,17 @@ export default function Dashboard() {
       { name: "Ongoing", value: ongoingValue },
     ];
   }, [pendingValue, partialValue, ongoingValue]);
-  //   api
-  //     .get("http://localhost:3000/proposal/search", {
-  //       headers: { id },
-  //     })
-  //     .then((response) => {
-  //       setProposalData(response.data.result);
-  //     })
-  //     .catch((err) => console.log(err));
+  useEffect(() => {
+    if (
+      loaderDemands == "fetching" ||
+      loaderProposals == "fetching" ||
+      loaderOngoing == "fetching" ||
+      loaderPartial == "fetching"
+    ) {
+      setLoading(true);
+    } else setLoading(false);
+  }, [loaderDemands, loaderProposals, loaderOngoing, loaderPartial]);
+  if (isLoading) return <Loader></Loader>;
   return (
     <div className="to-white-100 grid h-full grid-cols-2 grid-rows-2 items-center justify-between gap-3">
       {role == "contractor" && (
