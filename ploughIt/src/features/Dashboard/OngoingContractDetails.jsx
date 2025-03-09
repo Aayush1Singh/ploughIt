@@ -4,6 +4,9 @@ import { StyledButton } from "./DemandsTable";
 import api from "@/services/axiosApi";
 import { ethers } from "ethers";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ContentRow } from "@/ui/Modal";
+import { MainHead } from "./Modal2";
+import { useSelector } from "react-redux";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const FARMING_CONTRACT_T2_ABI = [
@@ -99,6 +102,42 @@ const FARMING_CONTRACT_T2_ABI = [
   },
   { stateMutability: "payable", type: "receive" },
 ];
+const ContentDiv = function ({ data }) {
+  const [oData, setData] = useState(data || {});
+  // console.log(oriData);
+  console.log(oData);
+  const [update, setUpdate] = useState(false);
+  useEffect(() => {}, [update]);
+  const contractorID = useSelector((state) => state.user.id);
+  return (
+    <div className="m-0 p-0">
+      <MainHead>{`Details`}</MainHead>
+      <ContentRow rowName={"Crop"} content={oData.crop}></ContentRow>{" "}
+      <ContentRow rowName={"Variety"} content={oData.variety}></ContentRow>{" "}
+      <ContentRow rowName={"Price"} content={oData.price}></ContentRow>{" "}
+      <ContentRow
+        rowName={"Description"}
+        content={oData.description}
+      ></ContentRow>{" "}
+      <ContentRow
+        rowName={"Preference"}
+        content={oData.preference}
+      ></ContentRow>{" "}
+      <ContentRow rowName={"Duration"} content={oData.duration}></ContentRow>{" "}
+      <ContentRow rowName={"Quantity"} content={oData.quantity}></ContentRow>{" "}
+      <StyledButton
+        className="rounded-full p-3 hover:bg-green-300"
+        variation="accept"
+        onClick={() => setUpdate(true)}
+      >
+        Update
+      </StyledButton>
+      <StyledButton variation="reject" onClick={() => {}}>
+        delete
+      </StyledButton>
+    </div>
+  );
+};
 function OngoingDemandDetails() {
   const [hasFetchedAddr, setGetAddr] = useState(false);
   const [pendingActions, setPendingActions] = useState(null);
@@ -239,24 +278,27 @@ function OngoingDemandDetails() {
   }, [pendingActions, data]);
   console.log(state);
   return (
-    <div>
-      <StyledButton
-        variation="accept"
-        onClick={(e) => {
-          handlePayRest();
-        }}
-      >
-        Pay Rest Amount
-      </StyledButton>
-      <StyledButton
-        variation="accept"
-        onClick={(e) => {
-          handleCompleteContract();
-        }}
-      >
-        Complete Contract
-      </StyledButton>
-    </div>
+    <>
+      <ContentDiv data={data}></ContentDiv>
+      <div>
+        <StyledButton
+          variation="accept"
+          onClick={(e) => {
+            handlePayRest();
+          }}
+        >
+          Pay Rest Amount
+        </StyledButton>
+        <StyledButton
+          variation="accept"
+          onClick={(e) => {
+            handleCompleteContract();
+          }}
+        >
+          Complete Contract
+        </StyledButton>
+      </div>
+    </>
   );
 }
 
