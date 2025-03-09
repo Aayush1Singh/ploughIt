@@ -224,6 +224,7 @@ function OngoingDemandDetails() {
       payRest(cachedAddr); // Use cached data instead of waiting for refetch
     } else {
       setGetAddr(true);
+      while (fetchStatus == "fetching");
       await payRest(data);
     }
   }
