@@ -1882,7 +1882,7 @@ app.get("/getContractAddress", async (req, res) => {
     // console.log(demandNo);
     const tx = await farmingFactory.getContractAddress(demandNo);
     const contract = new ethers.Contract(
-      CONTRACT_ADDRESS,
+      tx,
       process.env.T2_CONTRACT_ABI,
       provider
     );
