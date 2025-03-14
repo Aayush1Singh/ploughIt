@@ -7,7 +7,7 @@ function Loader() {
         <img
           // width="150"
           // height=""
-          src="../../public/loading_animation.gif"
+          src="../../loading_animation.gif"
         ></img>
         {/* <video
           width="150"
