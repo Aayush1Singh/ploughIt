@@ -2,11 +2,11 @@ import React from "react";
 
 function Loader() {
   return (
-    <div className="inset w-100% absolute z-1000 flex size-full h-screen content-center justify-center bg-center backdrop-blur-[3px]">
-      <div className="flex size-full h-screen w-[100%] content-center items-center justify-center backdrop-blur-[1px]">
+    <div className="absolute z-1000 h-[calc(100%-5px)] w-[calc(100%-5px)] content-center backdrop-blur-[5px]">
+      <div className="flex content-center justify-center">
         <img
-          width="150"
-          height="240"
+          // width="150"
+          // height=""
           src="../../public/loading_animation.gif"
         ></img>
         {/* <video

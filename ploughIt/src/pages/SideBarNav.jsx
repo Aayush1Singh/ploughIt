@@ -5,6 +5,7 @@ import { NavLink } from "react-router-dom";
 function SideBarNav() {
   const { role } = useSelector((state) => state.user);
   const styles = "rounded-full  hover:bg-green-500 w-full p-2 ease-in-out";
+
   return (
     <div className="flex w-full flex-col gap-3">
       {role == "farmer" && (

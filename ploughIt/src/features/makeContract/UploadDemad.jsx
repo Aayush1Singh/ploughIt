@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { Form, FormRow, GreenButton } from "../../ui/FormRow";
 import {
   FormControl,
@@ -18,6 +18,7 @@ import api from "../../services/axiosApi";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { ThemeContext } from "@/pages/AppLayout";
 // import dotenv from "dotenv";
 // dotenv.config(); // Load Environment Variables
 // console.log(dotenv);
@@ -36,10 +37,24 @@ function UploadDemand() {
   const [preference, setPreference] = useState("none");
   const { register, handleSubmit, formState } = useForm();
   const navigate = useNavigate();
+  async function getWallet() {
+    const y = await api.get(`${API_URL}/get-wallet`);
+
+    return y;
+  }
+  const { isLoading, setLoader } = useContext(ThemeContext);
+  function handleLoadingChangeF() {
+    setLoader(false);
+  }
+  function handleLoadingChangeT() {
+    setLoader(true);
+  }
   async function makePaymentPrompt(data) {
-    const payData = await api.get(`${API_URL}/get-wallet`);
+    handleLoadingChangeT();
+    const payData = await getWallet();
+    handleLoadingChangeF();
     const { address, signature, publicKey } = payData.data;
-    const d2 = await ethers.verifyMessage(address, signature);
+    const d2 = ethers.verifyMessage(address, signature);
     if (publicKey == d2) {
       console.log("address verified. ");
     } else {
@@ -49,9 +64,12 @@ function UploadDemand() {
 
     if (typeof window != "undefined" && typeof window.ethereum != "undefined") {
       try {
+        handleLoadingChangeT();
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
+        handleLoadingChangeF();
+
         console.log(accounts);
       } catch (err) {
         console.log(err.message);
@@ -60,19 +78,29 @@ function UploadDemand() {
       toast.error("install a web3 wallet bro");
     }
 
-    navigate("/home/showSummary");
+    navigate("/home/newDemand/ShowSummary", { state: data });
+    handleLoadingChangeT();
+
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
+    handleLoadingChangeF();
+    handleLoadingChangeT();
     let convertercryptoToDollars = await api.get(`${API_URL}/convertMoney`, {
       headers: { data: JSON.stringify(data) },
     });
-
+    console.log(
+      "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk",
+      convertercryptoToDollars,
+    );
+    handleLoadingChangeF();
     convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
     convertercryptoToDollars = convertercryptoToDollars.data[0].quote.ETH.price;
     convertercryptoToDollars = parseFloat(convertercryptoToDollars).toFixed(18);
     convertercryptoToDollars = `0x${ethers.parseEther(convertercryptoToDollars).toString(16)}`;
     try {
+      // handleLoadingChange();
+
       const to = await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [
@@ -83,6 +111,8 @@ function UploadDemand() {
           },
         ],
       });
+      // handleLoadingChange();
+
       console.log(to);
       return to;
     } catch (err) {
@@ -96,13 +126,16 @@ function UploadDemand() {
     const res = await makePaymentPrompt(data);
     console.log("response after transaction", res);
     if (
-      res?.message ===
-      "MetaMask Tx Signature: User denied transaction signature."
+      res?.message === 
+      "MetaMask Tx Signature: User denied transaction signature." || typeof res=='object'
     ) {
       toast.error("failed transaction");
       navigate("/home");
       return;
     }
+
+    handleLoadingChangeT();
+
     api
       .get(`${API_URL}/demand/insert`, {
         headers: { data: JSON.stringify(data), res },
@@ -111,11 +144,13 @@ function UploadDemand() {
         console.log(response.data);
       })
       .catch((err) => console.log(err));
+    handleLoadingChangeF();
+
     // if (error) throw new Error(error.message);
   }
   const { errors } = formState;
   console.log(!!errors.variety);
-  const { mutate, isLoading } = useMutation({
+  const { mutate } = useMutation({
     mutationFn: uploadDemand,
     onSuccess: () => {
       queryClient.invalidateQueries(["demands", { id, role }]);

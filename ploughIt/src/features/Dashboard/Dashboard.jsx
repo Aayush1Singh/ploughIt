@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import DemandsTable, { StyledButton, StyledTableRow } from "./DemandsTable";
 import { useSelector } from "react-redux";
 import api from "../../services/axiosApi";
@@ -10,6 +10,7 @@ import OngoingContracts from "./OngoingContracts";
 import { Visual } from "./Visual";
 import ProposalsTable from "./ProposalsTable";
 import Loader from "@/ui/Loader";
+import { ThemeContext } from "@/pages/AppLayout";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Dashboard() {
@@ -19,7 +20,10 @@ export default function Dashboard() {
   const [partialData, setPartialData] = useState([]);
   const [ongoingData, setOngoingData] = useState([]);
   const [proposalData, setProposalData] = useState([]);
-  const [isLoading, setLoading] = useState(false);
+  const { isLoading, setLoader } = useContext(ThemeContext);
+  // console.log(x);
+
+  // const [isLoading, setLoading] = useState(false);
   async function demandFn() {
     const data = await api.get(`${API_URL}/${role}/demand/pending`, {
       headers: { data: JSON.stringify({ id }) },
@@ -131,23 +135,29 @@ export default function Dashboard() {
       loaderOngoing == "fetching" ||
       loaderPartial == "fetching"
     ) {
-      setLoading(true);
-    } else setLoading(false);
+      setLoader(true);
+    } else setLoader(false);
   }, [loaderDemands, loaderProposals, loaderOngoing, loaderPartial]);
-  if (isLoading) return <Loader></Loader>;
+  // if (isLoading) return <Loader></Loader>;
   return (
-    <div className="to-white-100 grid h-full grid-cols-2 grid-rows-2 items-center justify-between gap-3">
-      {role == "contractor" && (
-        <DemandsTable rows={data} contractorID={id}></DemandsTable>
-      )}
-      {role == "farmer" && (
-        <ProposalsTable rows={proposalData}></ProposalsTable>
-      )}
-      <Visual data={pieData}></Visual>
-      {partialData && (
-        <PartialTable2 rows={partialData} className=""></PartialTable2>
-      )}
-      <OngoingContracts rows={ongoingData} contractorID={id}></OngoingContracts>
-    </div>
+    <>
+      {isLoading && <Loader></Loader>}
+      <div className="to-white-100 grid h-full grid-cols-2 grid-rows-2 items-center justify-between gap-3">
+        {role == "contractor" && (
+          <DemandsTable rows={data} contractorID={id}></DemandsTable>
+        )}
+        {role == "farmer" && (
+          <ProposalsTable rows={proposalData}></ProposalsTable>
+        )}
+        <Visual data={pieData}></Visual>
+        {partialData && (
+          <PartialTable2 rows={partialData} className=""></PartialTable2>
+        )}
+        <OngoingContracts
+          rows={ongoingData}
+          contractorID={id}
+        ></OngoingContracts>
+      </div>
+    </>
   );
 }

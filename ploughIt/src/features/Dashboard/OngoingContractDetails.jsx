@@ -8,7 +8,6 @@ import { ContentRow } from "@/ui/Modal";
 import { MainHead } from "./Modal2";
 import { useSelector } from "react-redux";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
-
 const FARMING_CONTRACT_T2_ABI = [
   {
     anonymous: false,
@@ -36,18 +35,18 @@ const FARMING_CONTRACT_T2_ABI = [
     type: "event",
   },
   {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "from", type: "address" },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "amount",
-        type: "uint256",
-      },
-    ],
-    name: "EarnestDeposited",
-    type: "event",
+    inputs: [],
+    name: "amount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "approveC",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [],
@@ -58,28 +57,21 @@ const FARMING_CONTRACT_T2_ABI = [
   },
   {
     inputs: [],
-    name: "contractDetails",
+    name: "getDetail",
     outputs: [
-      { internalType: "address", name: "owner", type: "address" },
-      { internalType: "string", name: "variation", type: "string" },
-      { internalType: "string", name: "crop", type: "string" },
-      { internalType: "uint256", name: "quantity", type: "uint256" },
-      { internalType: "uint256", name: "pricePerUnit", type: "uint256" },
-      { internalType: "uint256", name: "duration", type: "uint256" },
-      { internalType: "bool", name: "isCompleted", type: "bool" },
-      { internalType: "uint256", name: "farmerID", type: "uint256" },
-      { internalType: "uint256", name: "contractorID", type: "uint256" },
+      { internalType: "string", name: "", type: "string" },
+      { internalType: "string", name: "", type: "string" },
+      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "uint256", name: "", type: "uint256" },
+      { internalType: "uint256", name: "", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [],
-    name: "getDetail",
+    name: "getID",
     outputs: [
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "string", name: "", type: "string" },
-      { internalType: "uint256", name: "", type: "uint256" },
       { internalType: "uint256", name: "", type: "uint256" },
       { internalType: "uint256", name: "", type: "uint256" },
     ],
@@ -116,13 +108,6 @@ const FARMING_CONTRACT_T2_ABI = [
     name: "startDate",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "bool", name: "status", type: "bool" }],
-    name: "updateStatus",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function",
   },
   { stateMutability: "payable", type: "receive" },
@@ -195,24 +180,22 @@ function OngoingDemandDetails() {
   }
 
   async function payRest(response) {
-    let convertercryptoToDollars = await api.get(
-      `${API_URL}/convertMoneyRest`,
-      {
-        headers: { data: JSON.stringify(state) },
-      },
-    );
-    console.log(convertercryptoToDollars);
-
+    let res = await api.get(`${API_URL}/convertMoneyRest`, {
+      headers: { data: JSON.stringify(state) },
+    });
+    // console.log(convertercryptoToDollars);
+    const { amount, contractAddress } = res.data;
+    console.log(res);
     // const response = await api.get(`${API_URL}/getContractAddress`, {
     //   headers: { contractID: state.contractID },
     // });
     // console.log(response);
-    const addressDest = response.data.contractAddress;
+    // const addressDest = convertercryptoToDollars.contractAddress;
 
-    convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
-    convertercryptoToDollars = convertercryptoToDollars.data[0].quote.ETH.price;
-    convertercryptoToDollars = parseFloat(convertercryptoToDollars).toFixed(18);
-    convertercryptoToDollars = `0x${ethers.parseEther(convertercryptoToDollars).toString(16)}`;
+    // convertercryptoToDollars = JSON.parse(convertercryptoToDollars.data.data);
+    // convertercryptoToDollars = convertercryptoToDollars.data[0].quote.ETH.price;
+    // convertercryptoToDollars = parseFloat(convertercryptoToDollars).toFixed(18);
+    const convertercryptoToDollars = `0x${BigInt(amount).toString(16)}`;
     console.log(convertercryptoToDollars);
     try {
       let accounts = await window.ethereum.request({
@@ -223,7 +206,7 @@ function OngoingDemandDetails() {
         params: [
           {
             from: accounts[0],
-            to: addressDest,
+            to: contractAddress,
             value: convertercryptoToDollars,
           },
         ],

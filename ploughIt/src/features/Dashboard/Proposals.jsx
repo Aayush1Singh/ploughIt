@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 import { columns, StyledButton } from "./DemandsTable";
 import Modal2, { FlexIt, MainHead, SecondMainHead } from "./Modal2";
@@ -19,6 +19,7 @@ import UpdateDemand from "./UpdateDemand";
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
 import { StyleStatus } from "./ProposalsTable";
+import { ThemeContext } from "@/pages/AppLayout";
 const StyledTableRow = styled.div`
   display: grid;
   grid-template-columns: 1fr 3fr 1fr;
@@ -224,11 +225,17 @@ export function AllProposalsTable() {
       headers: { id },
     });
   }
+  const { isLoading, setLoader } = useContext(ThemeContext);
   const [rows, setRows] = useState([]);
-  const { data, isLoading } = useQuery({
+  const { data, fetchStatus } = useQuery({
     queryFn: searchAllProposals,
     queryKey: ["all", "proposals", { id, role }],
   });
+  useEffect(() => {
+    if (fetchStatus == "fetching") {
+      setLoader(true);
+    } else setLoader(false);
+  }, [fetchStatus]);
   useEffect(() => {
     console.log(data);
     setRows(data?.data?.result);

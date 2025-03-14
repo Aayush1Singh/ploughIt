@@ -21,6 +21,8 @@ import DemandDetials from "./features/DemandDetails.jsx/DemandDetials";
 import { PersistGate } from "redux-persist/integration/react";
 import { Toaster } from "react-hot-toast";
 import AllProposalsTable from "./features/Dashboard/Proposals";
+import { useState, createContext } from "react";
+import ShowSummary from "./ui/showSummary";
 function App() {
   const queryClient = new QueryClient();
   const { role } = useSelector((state) => state.user);
@@ -67,7 +69,12 @@ function App() {
               element={<OngoingContractDetails></OngoingContractDetails>}
             ></Route>
             <Route element={<NotFound></NotFound>} path="*"></Route>
+            <Route
+              path="newDemand/ShowSummary"
+              element={<ShowSummary></ShowSummary>}
+            ></Route>
           </Route>
+
           <Route element={<Modal></Modal>} path="/modal"></Route>
         </Routes>
       </BrowserRouter>

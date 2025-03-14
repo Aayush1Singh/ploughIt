@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useLayoutEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/axiosApi";
 import { useLocation } from "react-router-dom";
@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@mui/material";
 import toast from "react-hot-toast";
+import { ThemeContext } from "@/pages/AppLayout";
+import { useQuery } from "@tanstack/react-query";
 const Table = styled.div``;
 const TableRows = styled.div`
   //farmerID Price Duration Time
@@ -48,8 +50,19 @@ const TableHeadT = function () {
 };
 const TableRowT = function ({ data }) {
   const [sureModel, setSureModel] = useState(false);
-  if (!data) return;
+  const { isLoading, setLoader } = useContext(ThemeContext);
 
+  if (!data) return;
+  async function acceptContract() {
+    setLoader(true);
+    const op = await api.get(`${API_URL}/proposal/accepted/${data.demandID}`, {
+      headers: { proposal: JSON.stringify(data) },
+    });
+    setLoader(false);
+    if (op.resposnse.status == "failed") {
+      console.log("helo");
+    }
+  }
   return (
     <StyledTableRow>
       <p>{data.farmerID}</p>
@@ -71,14 +84,7 @@ const TableRowT = function ({ data }) {
         <Modal2 setIsOpen={setSureModel}>
           <div>
             <p>are you sure?</p>
-            <StyledButton
-              variation={"accept"}
-              onClick={() => {
-                api.get(`${API_URL}/proposal/accepted/${data.demandID}`, {
-                  headers: { proposal: JSON.stringify(data) },
-                });
-              }}
-            >
+            <StyledButton variation={"accept"} onClick={acceptContract}>
               Yes
             </StyledButton>{" "}
             <StyledButton variation={"reject"} onClick={() => {}}>
@@ -144,9 +150,85 @@ const ContentDiv = function ({ data }) {
 function TableRow2({ data, navigate }) {
   console.log(data);
   const [sureModel, setSureModel] = useState(false);
+  const [sureModelRetry, setSureModelRetry] = useState(false);
+  const [retryRes, setRetryRes] = useState(null);
   const [rejected, setRejected] = useState(data.status == "R" ? true : false);
+  const { isLoading, setLoader } = useContext(ThemeContext);
+  useEffect(() => {
+    // if (retryRes) {
+    console.log(retryRes);
+    if (retryRes) setSureModelRetry(true); // ✅ Open modal only after data is ready
+  }, [retryRes]);
   if (!data) return;
   if (rejected) return null;
+  function handleLoadingChangeT() {
+    setLoader(true);
+  }
+  function handleLoadingChangeF() {
+    setLoader(false);
+  }
+  async function payRestAndMakeContract() {
+    console.log("hellllllllllllllll");
+    console.log(retryRes);
+    let { to: address, remainingAmount } = retryRes.data;
+
+    handleLoadingChangeT();
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
+    handleLoadingChangeF();
+
+    try {
+      // handleLoadingChange();
+      remainingAmount = BigInt(remainingAmount);
+      const to = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: accounts[0],
+            to: address,
+            value: `0x${remainingAmount.toString(16)}`,
+          },
+        ],
+      });
+      // handleLoadingChange();
+      acceptContract();
+      // api.get(`${VITE_API_URL}\`)
+      console.log(to);
+      return to;
+    } catch (err) {
+      console.log(retryRes);
+      console.log(err);
+      return err;
+    }
+  }
+  async function acceptContract() {
+    setLoader(true);
+    const x = await api
+      .get(`${API_URL}/proposal/accepted/${data.demandID}`, {
+        headers: { proposal: JSON.stringify(data) },
+      })
+      .then((res) => {
+        console.log(res);
+        toast.error("inida");
+
+        if (res.data.status == "failed") {
+          if (res.data.message == "Insufficient amount deposited") {
+            //logic to deposit money
+            toast.error("could not make contract due to indufficient deposit");
+            //modal window to ask to deposit money and if pressend yes on that send eth_transaction and on success, make contract
+            setSureModel(false);
+            setRetryRes(res);
+            //making a modal windoww
+            // setSureModelRetry(true);
+          }
+        } else {
+          toast.success("Proposal accepted and contract made");
+          navigate("/home/dashboard");
+        }
+      });
+    setLoader(false);
+  }
   return (
     <>
       <TableRow
@@ -180,6 +262,29 @@ function TableRow2({ data, navigate }) {
             Reject
           </StyledButton>
         </TableCell>
+        {sureModelRetry && (
+          <Modal2 setIsOpen={setSureModelRetry}>
+            <p> Deposit money and make cotract?</p>
+            <StyledButton
+              variation="accept"
+              onClick={() => {
+                payRestAndMakeContract();
+              }}
+            >
+              {" "}
+              Yes
+            </StyledButton>
+            <StyledButton
+              variation="reject"
+              onClick={() => {
+                setSureModelRetry(false);
+              }}
+            >
+              No
+            </StyledButton>
+          </Modal2>
+        )}
+
         {sureModel && (
           <Modal2 setIsOpen={setSureModel}>
             <div>
@@ -195,11 +300,15 @@ function TableRow2({ data, navigate }) {
                       console.log(res);
                       toast.error("inida");
                       if (res.data.status == "failed") {
+                        console.log("hheloooo");
                         toast.error(
-                          res?.response.data.message ||
+                          res?.data.message ||
                             "could not make contracct due to insufficient funds",
                         );
                         setSureModel(false);
+                        setRetryRes(res);
+                        console.log("ko");
+                        // setSureModelRetry(true);
                       } else {
                         toast.success("Proposal accepted and contract made");
                         navigate("/home/dashboard");
@@ -233,13 +342,37 @@ function DemandDetials() {
   const { state } = useLocation();
   console.log(state);
   const [proposals, setProposals] = useState([]);
+  const { isLoading, setLoader } = useContext(ThemeContext);
+  async function getProposals() {
+    return await api.get(`${API_URL}/proposal/${param.demandID}`);
+
+    // .then((response) => {
+    //   console.log(response.data.result);
+    //   setProposals(response.data.result);
+    // });
+  }
+  const { data, fetchStatus } = useQuery({
+    queryKey: ["proposal", param.demandID],
+    queryFn: getProposals,
+    staleTime: Infinity,
+  });
+  useEffect(() => {
+    console.log(data);
+    if (data) setProposals(data?.data?.result);
+  }, [data]);
   useEffect(() => {
     //send a req to fetch all demands related to a singhe demandID;
-    api.get(`${API_URL}/proposal/${param.demandID}`).then((response) => {
-      console.log(response.data.result);
-      setProposals(response.data.result);
-    });
-  }, [state]);
+
+    // api.get(`${API_URL}/proposal/${param.demandID}`).then((response) => {
+    //   console.log(response.data.result);
+    //   setProposals(response.data.result);
+    // });
+    if (fetchStatus == "idle") {
+      setLoader(false);
+    } else {
+      setLoader(true);
+    }
+  }, [fetchStatus]);
   return (
     <div className="grid h-full gap-2 overflow-auto">
       <button

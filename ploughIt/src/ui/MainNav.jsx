@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ProfileMini from "./ProfileMini";
 import NotificationTab from "./NotificationTab";
 import styled from "styled-components";
+import Logout from "@/services/logout";
 const Button = styled.button`
   box-shadow: 0 0;
   background-color: transparent;
@@ -36,6 +37,7 @@ function MainNav() {
       >
         🔔
       </Button>
+      <Logout></Logout>
       {isOpenNotificaton && (
         <NotificationTab setOpenNotification={setOpenNotification} />
       )}

@@ -18,6 +18,7 @@ import {
   Table,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import api from "@/services/axiosApi";
 export const StyledTableRow = styled.div`
   width: 100%;
 
@@ -133,8 +134,16 @@ const Styledspan = styled.span`
       color: var(--color-yellow-500);
     `}
 `;
+const API_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function TableRow2({ data, navigate, contractorID }) {
   const [update, setUpdate] = useState(false);
+  async function deleteDemand() {
+    console.log(data);
+    api.get(`${API_URL}/deleteDemand`, {
+      headers: { data: JSON.stringify({ demandID: data.auto_id }) },
+    });
+  }
   return (
     <>
       <TableRow
@@ -169,7 +178,8 @@ export function TableRow2({ data, navigate, contractorID }) {
             <StyledButton
               onClick={(e) => {
                 e.preventDefault();
-                e.stopPropagation();
+                // e.stopPropagation();
+                deleteDemand();
               }}
             >
               🗑️
