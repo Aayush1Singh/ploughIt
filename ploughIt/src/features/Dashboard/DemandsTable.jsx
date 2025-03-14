@@ -178,7 +178,7 @@ export function TableRow2({ data, navigate, contractorID }) {
             <StyledButton
               onClick={(e) => {
                 e.preventDefault();
-                // e.stopPropagation();
+                e.stopPropagation();
                 deleteDemand();
               }}
             >
