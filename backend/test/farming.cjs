@@ -59,35 +59,57 @@ describe("FarmingContract Deployment", function () {
     const tt = await farmingFactory.connect(contractor).totalDeposited();
     expect(tt).to.equal("4000000000000000000");
   });
-  it("should make contract", async function () {
-    const depositAmount = ethers.parseEther("4");
-    let tx = await farmingFactory.connect(contractor).depositEarnest({
-      value: "4000000000000000000",
-    });
-    tx.wait();
-    tx = await farmingFactory
-      .connect(server)
-      .createFarmingContractT2(
-        farmer,
-        contractor,
-        0,
-        "wheat",
-        "mogra",
-        6,
-        120,
-        40,
-        1,
-        2,
-        10
-      );
-    tx = await farmingFactory.getDetails(0);
-    console.log(tx);
-  });
+  // it("should make contract", async function () {
+  //   const depositAmount = ethers.parseEther("4");
+  //   let tx = await farmingFactory.connect(contractor).depositEarnest({
+  //     value: "4000000000000000000",
+  //   });
+  //   tx.wait();
+  //   tx = await farmingFactory
+  //     .connect(server)
+  //     .createFarmingContractT2(
+  //       farmer,
+  //       contractor,
+  //       0,
+  //       "wheat",
+  //       "mogra",
+  //       6,
+  //       120,
+  //       40,
+  //       1,
+  //       2,
+  //       100000000000000
+  //     );
+
+  //   let receipt = await tx.wait(); // Wait for mining
+
+  //   // Retrieve contract address from event logs (if applicable)
+  //   let event = receipt.logs.find(
+  //     (log) => log.address === farmingFactory.target
+  //   );
+  //   let farmingContractAddress = event?.args?.contractAddress; // Ensure correct event parsing
+
+  //   // Attach the newly created contract instance
+  //   let farmingContract = await ethers.getContractAt(
+  //     "FarmingContractT2",
+  //     farmingContractAddress,
+  //     contractor
+  //   );
+
+  //   // Now approve contractor
+  //   tx = await farmingContract.connect(contractor).approveContractor();
+  //   await tx.wait(); // Wait for approval transaction
+
+  //   tx = await farmingFactory.getDetails(0);
+
+  //   console.log(tx);
+  // });
   it("should deposit rest of money", async function () {
     const depositAmount = ethers.parseEther("4");
     let tx = await farmingFactory.connect(contractor).depositEarnest({
       value: "4000000000000000000",
     });
+    console.log("hello");
     tx = await farmingFactory
       .connect(server)
       .createFarmingContractT2(
@@ -103,7 +125,8 @@ describe("FarmingContract Deployment", function () {
         2,
         10
       );
-
+    await tx.wait();
+    console.log(tx);
     tx = await farmingFactory.connect(contractor).depositRest(0, {
       value: "6000000000000000000",
     });
@@ -116,55 +139,29 @@ describe("FarmingContract Deployment", function () {
       contractAddress,
       [
         {
+          anonymous: false,
           inputs: [
             {
+              indexed: true,
               internalType: "address",
-              name: "_farmer",
+              name: "contractAddress",
               type: "address",
             },
             {
+              indexed: true,
               internalType: "address",
-              name: "_contractor",
+              name: "contractor",
               type: "address",
             },
             {
-              internalType: "string",
-              name: "_crop",
-              type: "string",
-            },
-            {
-              internalType: "string",
-              name: "_variation",
-              type: "string",
-            },
-            {
-              internalType: "uint256",
-              name: "_duration",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "_price",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "_quantity",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "_farmerID",
-              type: "uint256",
-            },
-            {
-              internalType: "uint256",
-              name: "_contractorID",
-              type: "uint256",
+              indexed: true,
+              internalType: "address",
+              name: "farmer",
+              type: "address",
             },
           ],
-          stateMutability: "nonpayable",
-          type: "constructor",
+          name: "ContractApproved",
+          type: "event",
         },
         {
           anonymous: false,
@@ -281,6 +278,64 @@ describe("FarmingContract Deployment", function () {
         {
           inputs: [
             {
+              internalType: "address",
+              name: "_farmer",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "_contractor",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "_crop",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_variation",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "_duration",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_price",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_quantity",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_farmerID",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_contractorID",
+              type: "uint256",
+            },
+            {
+              internalType: "uint256",
+              name: "_amount",
+              type: "uint256",
+            },
+          ],
+          name: "initialize",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
               internalType: "bool",
               name: "status",
               type: "bool",
@@ -327,7 +382,10 @@ describe("FarmingContract Deployment", function () {
 
     // Call approveContractor
     tx = await contractInstance.connect(contractor).approveContractor();
-    await tx.wait();
-    console.log("Transaction successful:", tx);
+
+    tx = await tx.wait();
+
+    console.log("Transaction successful:", tx.logs);
+    console.log("helo");
   });
 });

@@ -7,20 +7,22 @@ async function main() {
   const allowedServers = [server1.address];
 
   console.log("Deploying FarmingFactory with allowed servers:", allowedServers);
-  const FarmingContract = await ethers.getContractFactory("FarmingContract");
-  const farmingContract = await FarmingContract.deploy();
-  const FarmingContractT2 = await ethers.getContractFactory(
-    "FarmingContractT2"
-  );
-  const farmingContractT2 = await FarmingContractT2.deploy();
-  console.log(farmingContract.target);
-  console.log(farmingContractT2.target);
+  // const FarmingContract = await ethers.getContractFactory("FarmingContract");
+  // const farmingContract = await FarmingContract.deploy();
+  // const FarmingContractT2 = await ethers.getContractFactory(
+  //   "FarmingContractT2"
+  // );
+  // const farmingContractT2 = await FarmingContractT2.deploy();
+  // console.log(farmingContract.target);
+  // console.log(farmingContractT2.target);
   // Deploy FarmingFactory with allowed server wallets
   const FarmingFactory = await hre.ethers.getContractFactory("FarmingFactory");
   const farmingFactory = await FarmingFactory.deploy(
     allowedServers,
-    farmingContract.target,
-    farmingContractT2.target
+    "0x909d2367056f4c0ADD484fa9808E707Fd95F1DB9",
+    // farmingContract.target,
+    "0xC5Ad37d459553e4E4d64477d96D27f83d7cC29A0"
+    // farmingContractT2.target
   );
 
   await farmingFactory.waitForDeployment();
@@ -36,9 +38,14 @@ main().catch((error) => {
 
 /*
 Deploying FarmingFactory with allowed servers: [ '0xa0976a34f8cc39BCD669C12229aB3328b8101127' ]
-0xE6ce1A9060018f1407F8E17E67772cfE3CBADc50
-0xA97D6F03f7e0ca20e49Db2E3B2496786B06b104F
-FarmingFactory deployed at: 0x7c8eF95A8bB23a463F84F986C490911D5d936b29
+0x909d2367056f4c0ADD484fa9808E707Fd95F1DB9
+0xC5Ad37d459553e4E4d64477d96D27f83d7cC29A0
+FarmingFactory deployed at:  0x3957Ca0c22e25f7cF0379f5540e45577103c32DD
+ */
+
+/**
+npx hardhat verify --constructor-args arguments.cjs 0x3957Ca0c22e25f7cF0379f5540e45577103c32DD
+ *
  */
 
 /*
@@ -61,7 +68,6 @@ https://sepolia.etherscan.io/address/0xE6ce1A9060018f1407F8E17E67772cfE3CBADc50#
 
 */
 
-
 /*
 
 npx hardhat verify --network sepolia 0xA97D6F03f7e0ca20e49Db2E3B2496786B06b104F
@@ -81,7 +87,6 @@ for verification on the block explorer. Waiting for verification result...
 Successfully verified contract FarmingContractT2 on the block explorer.
 https://sepolia.etherscan.io/address/0xA97D6F03f7e0ca20e49Db2E3B2496786B06b104F#code
 */
-
 
 /*
 Successfully submitted source code for contract

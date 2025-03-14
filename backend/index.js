@@ -37,7 +37,8 @@ const farmingFactory = new ethers.Contract(
 const salt = 10;
 const jwtSecret = "tusharisgay";
 const corsOption = {
-  origin: "https://plough-it.vercel.app",
+  origin: "http://localhost:5173",
+  // origin: "https://plough-it.vercel.app",
   credentials: true,
   // "access-control-allow-origin": true,
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -50,6 +51,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 import { createClient } from "@supabase/supabase-js";
+import { resolveSoa } from "dns";
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -89,6 +91,7 @@ const verifyJwt = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, jwtSecret);
+    // console.log(token);
     req.user = decoded;
     next();
   } catch (error) {
@@ -114,7 +117,7 @@ app.get("/signin", async (req, res) => {
       .from(`${role}`)
       .select("*")
       .eq("email", email);
-    if (result.length == 0 || error) {
+    if (result?.length == 0 || error) {
       res
         .status(400)
         .send({ status: "failed", message: "username/email invalid" });
@@ -226,9 +229,11 @@ async function convertMoney(quantity, price) {
         },
       }
     );
-    console.log(JSON.stringify(convertercryptoToDollars.data));
+    console.log(
+      JSON.stringify(convertercryptoToDollars.data.data[0].quote.ETH.price)
+    );
     // console.log("l;k;klk;klk;k;k", convertercryptoToDollars.data);
-    return convertercryptoToDollars.data.quote.ETH.price;
+    return convertercryptoToDollars.data.data[0].quote.ETH.price;
   } catch (err) {
     console.log(err);
   }
@@ -249,9 +254,10 @@ app.get("/demand/insert", async (req, res) => {
     } = JSON.parse(req.headers.data);
     // console.log(req.headers);
     const transactionHash = req.headers.res;
-    // console.log("transaction hash is: ", transactionHash);
+    console.log("transaction hash is: ", JSON.stringify(transactionHash));
     const tx = await provider.getTransaction(transactionHash);
     const reqETH = 0.3 * (await convertMoney(quantity, price));
+    console.log(reqETH);
     if (!tx) {
       return res
         .status(400)
@@ -271,14 +277,14 @@ app.get("/demand/insert", async (req, res) => {
     }
 
     // Wait for transaction confirmation
+    console.log("waiting for confirmation");
     const receipt = await provider.waitForTransaction(transactionHash, 1);
     if (!receipt || receipt.status !== 1) {
       return res
         .status(400)
         .json({ success: false, error: "Transaction failed!" });
     }
-
-    // console.log("Transaction verified ✅, uploading demand");
+    console.log("Transaction verified ✅, uploading demand");
     // console.log(
     //   crop,
     //   variety,
@@ -325,6 +331,7 @@ app.get("/demand/insert", async (req, res) => {
       preference,
       description,
       contractorID: id,
+      earnest: tx.value.toString(),
     };
     const { data: result, error: err } = await supabase
       .from("demand")
@@ -387,7 +394,7 @@ app.get("/demand/search", async (req, res) => {
       p_variety: variety.length > 0 ? variety : null, // Pass NULL if empty
       p_page_size: PAGE_SIZE + 1,
     });
-    console.log(result);
+    // console.log(result);
     if (err) {
       res
         .status(505)
@@ -893,7 +900,7 @@ app.get("/refresh", async (req, res) => {
       return;
     }
     // console.log(decoded);
-    const { id, role } = decoded;
+    const { id, role, email } = decoded;
     if (!refreshToken) {
       res.status(401).send({ message: "Invalid" });
     }
@@ -903,7 +910,7 @@ app.get("/refresh", async (req, res) => {
       .select("*")
       .eq("id", id)
       .eq("role", role);
-    console.log("moma lelo ", result, err);
+    // console.log("moma lelo ", result, err);
     if (err || result.length == 0) {
       res.status(505).send({ status: "failed", message: "Invalid Login" });
       return;
@@ -918,18 +925,12 @@ app.get("/refresh", async (req, res) => {
         }
 
         if (isMatch) {
-          const id =
-            req.headers.role === "farmer"
-              ? result[0].farmerID
-              : result[0].contractorID;
+          console.log("refreshing token : ", req.headers);
           const accessToken = jwt.sign(
             {
-              email: req.headers.email,
-              role: req.headers.role,
-              id:
-                req.headers.role === "farmer"
-                  ? result[0].farmerID
-                  : result[0].contractorID,
+              email: email,
+              role: role,
+              id,
             },
             jwtSecret,
             { expiresIn: 20 }
@@ -1466,43 +1467,38 @@ app.get("/proposal/accepted/:demandID", async (req, res) => {
         // farmerID,
         created_at,
       } = contractData;
-      // console.log(contractData);
+      console.log(contractData);
+      const convertercryptoToDollars = await axios.get(
+        "https://pro-api.coinmarketcap.com/v2/tools/price-conversion",
+        {
+          params: {
+            amount: quantity * price,
+            symbol: "INR",
+            convert: "ETH",
+          },
+          headers: {
+            "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_KEY,
+          },
+        }
+      );
+      console.log(
+        quantity,
+        price,
+        convertercryptoToDollars.data.data[0].quote.ETH.price
+      );
+      let { data: farmer_wallet, error: ert } = await supabase
+        .from("farmer")
+        .select("wallet_address")
+        .eq("farmerID", farmerID);
+      let { data: contractor_wallet, error: erty } = await supabase
+        .from("contractor")
+        .select("wallet_address")
+        .eq("contractorID", contractorID);
       try {
         const unixTimestamp = new Date(created_at).getTime() / 1000;
         // console.log(unixTimestamp);
-        const convertercryptoToDollars = await axios.get(
-          "https://pro-api.coinmarketcap.com/v2/tools/price-conversion",
-          {
-            params: {
-              amount: quantity * price,
-              symbol: "INR",
-              convert: "ETH",
-            },
-            headers: {
-              "X-CMC_PRO_API_KEY": process.env.COIN_MARKET_KEY,
-            },
-          }
-        );
         // console.log("i am in it tryin to create it");
-        let { data: farmer_wallet, error: ert } = await supabase
-          .from("farmer")
-          .select("wallet_address")
-          .eq("farmerID", farmerID);
-        // console.log("selected farmer wwallet ", farmer_wallet, ert);
-        // await new Promise((resolve, reject) => {
-        //   con.query(
-        //     `select wallet_address from farmer where farmerID=${farmerID}`,
-        //     (error, results) => {
-        //       if (error) reject(error);
-        //       resolve(results || {});
-        //     }
-        //   );
-        // });
-        let { data: contractor_wallet, error: erty } = await supabase
-          .from("contractor")
-          .select("wallet_address")
-          .eq("contractorID", contractorID);
-        // console.log("selecting contractor wallet", contractor_wallet, erty);
+        console.log("selecting contractor wallet", contractor_wallet, erty);
         // await new Promise((resolve, reject) => {
         //   con.query(
         //     `select wallet_address from contractor where contractorID=${contractorID}`,
@@ -1590,21 +1586,147 @@ app.get("/proposal/accepted/:demandID", async (req, res) => {
         // console.log("updating tables at last", er, errr);
         // con.query(`delete from proposal where demandID=${demandID};`);
         res.send({ transactionHash: tx.hash, status: "success" });
-      } catch (err) {
+      } catch (error) {
         console.log(err);
-        res.status(400).send({ status: "failed" });
+        if (error.code === "CALL_EXCEPTION") {
+          if (error.reason == "Insufficient amount deposited") {
+            const apiValue = BigInt(
+              ethers.parseEther(
+                convertercryptoToDollars.data.data[0].quote.ETH.price.toFixed(
+                  18
+                )
+              )
+            );
+            const currentDeposit = await farmingFactory.totalDeposited(
+              contractor_wallet
+            );
+            // Solidity value (uint256) from contract
+            const contractValue = BigInt(currentDeposit); // Directly treat as BigInt
+            console.log("api val: ", apiValue);
+            console.log("contractVal: ", contractValue);
+            console.log();
+            res.send({
+              status: "failed",
+              message: "Insufficient amount deposited",
+              remainingAmount: (apiValue - contractValue + 1000)
+                .toString()
+                .padStart(18, "0"),
+              to: FARMING_FACTORY_ADDRESS,
+            });
+          }
+          console.error(
+            `Transaction failed: ${error.reason || "Unknown error"}`
+          );
+        } else {
+          console.error(`Unexpected error: ${error.message}`);
+          res.send({
+            status: "failed",
+            message: `Unexpected error: ${error.message}`,
+          });
+        }
+        return;
+        // res.status(400).send({ status: "failed" });
       }
-    } catch (err) {
+    } catch (error) {
       // console.log(err);
-      res.status(505).send({
-        status: "failed",
-        message: "internal server error updates could not take place",
-      });
+      if (error.code === "CALL_EXCEPTION") {
+        if (error.reason == "Insufficient amount deposited") {
+          const apiValue = BigInt(
+            Math.round(
+              Number(convertercryptoToDollars.data.data[0].quote.ETH.price) *
+                1e18
+            )
+          );
+          const currentDeposit = await farmingFactory.totalDeposited(
+            contractor_wallet
+          );
+          // Solidity value (uint256) from contract
+          const contractValue = BigInt(currentDeposit); // Directly treat as BigInt
+
+          res.send({
+            status: "failed",
+            message: "Insufficient amount deposited",
+            remainingAmount: apiValue - contractValue,
+            to: FARMING_FACTORY_ADDRESS,
+          });
+        }
+        console.error(`Transaction failed: ${error.reason || "Unknown error"}`);
+      } else {
+        console.error(`Unexpected error: ${error.message}`);
+        res.send({
+          status: "failed",
+          message: `Unexpected error: ${error.message}`,
+        });
+      }
       return;
     }
     // res.status(200).send({ status: "success", message: "updates done" });
+  } catch (error) {
+    if (error.code === "CALL_EXCEPTION") {
+      if (err.reason == "Insufficient amount deposited") {
+        const apiValue = BigInt(
+          Math.round(
+            Number(convertercryptoToDollars.data.data[0].quote.ETH.price) * 1e18
+          )
+        );
+        const currentDeposit = await farmingFactory.totalDeposited(
+          contractor_wallet
+        );
+        // Solidity value (uint256) from contract
+        const contractValue = BigInt(currentDeposit); // Directly treat as BigInt
+        res.send({
+          status: "failed",
+          message: "Insufficient amount deposited",
+          remainingAmount: apiValue - contractValue,
+          to: FARMING_FACTORY_ADDRESS,
+        });
+      }
+      console.error(`Transaction failed: ${error.reason || "Unknown error"}`);
+    } else {
+      console.error(`Unexpected error: ${error.message}`);
+    }
+    console.log(err);
+  }
+});
+app.get("/deleteDemand", async (req, res) => {
+  /**
+   * 1. fetch id of  contractor that made it
+   *
+   * 2. get amount of money deposited
+   * 3. call function to revertMoney
+   * 4. delete contract
+   */
+  try {
+    const { demandID } = JSON.parse(req.headers.data);
+    console.log(req.headers);
+    const { data: result, error } = await supabase
+      .from("demand")
+      .select("*")
+      .eq("auto_id", demandID);
+    console.log(error, result);
+    const contractorID = result[0].contractorID;
+    if (req.user.id != contractorID || req.user.role != "contractor") {
+      res.send({
+        status: "failed",
+        message: "Demand can only be deleted by contractor who created it",
+      });
+      return;
+    }
+    const earnest = BigInt(result[0].earnest);
+    let { data: contractor_wallet, error: erty } = await supabase
+      .from("contractor")
+      .select("wallet_address")
+      .eq("contractorID", contractorID);
+    contractor_wallet = contractor_wallet[0].wallet_address;
+
+    const tx = await farmingFactory.revertMoney(earnest, contractor_wallet);
+
+    await supabase.from("demand").delete().eq("auto_id", demandID);
+    res.send({ status: "success", message: "Demand Deleted" });
+    console.log(contractorID, req.user);
   } catch (err) {
     console.log(err);
+    res.send({ status: "faileed" });
   }
 });
 app.get("/makeContract", async (req, res) => {
@@ -1841,6 +1963,29 @@ app.get("/convertMoneyRest", async (req, res) => {
   try {
     const data = JSON.parse(req.headers.data);
     // console.log(data);
+    //JUST NEED TO CHANGE VISIBILITY OF AMOUNT
+    //1. get contract address
+    const contractAddress = await farmingFactory.getContractAddress(
+      data.contractID
+    );
+    //2. get amount of contract
+    const contract = new ethers.Contract(
+      contractAddress,
+      process.env.T2_CONTRACT_ABI,
+      provider
+    );
+    const required = BigInt(await contract.amount());
+    const balance = await provider.getBalance(contractAddress);
+    //3. send to receive amount-self.balance
+    res.send({
+      amount: (required - balance).toString(),
+      contractAddress,
+      status: "success",
+      message: "successfully received amount",
+    });
+    return;
+
+    //THIS METHOD IS NOT FEASIBLE DUE TO VOLATILE NATURE OF ETH
     try {
       const convertercryptoToDollars = await axios.get(
         "https://pro-api.coinmarketcap.com/v2/tools/price-conversion",
@@ -1860,6 +2005,7 @@ app.get("/convertMoneyRest", async (req, res) => {
       convertercryptoToDollars.data.data[0].quote.ETH.price =
         0.6 * convertercryptoToDollars.data.data[0].quote.ETH.price;
       // console.log("l;k;klk;klk;k;k", convertercryptoToDollars.data);
+
       res.json({
         data: JSON.stringify(convertercryptoToDollars.data),
       });
@@ -1873,9 +2019,9 @@ app.get("/convertMoneyRest", async (req, res) => {
 
 app.get("/getContractAddress", async (req, res) => {
   try {
-    // console.log(
-    //   "hellllllllllllllllllllllllllllllllllllllllllllllooooooooooooooooooooooooo"
-    // );
+    console.log(
+      "hellllllllllllllllllllllllllllllllllllllllllllllooooooooooooooooooooooooo"
+    );
     // console.log(req.headers);
     let demandNo = req.headers.contractid;
     demandNo = Number(demandNo);
@@ -1886,28 +2032,33 @@ app.get("/getContractAddress", async (req, res) => {
       process.env.T2_CONTRACT_ABI,
       provider
     );
+    console.log("address sent ");
     res.send({
       contractAddress: tx,
       message: "successfully accessed",
       status: "success",
     });
+    console.log(
+      "in itin itin itin itin itin itin itin itin itin itin itin itin it"
+    );
     contract.on(
       "ContractApproved",
       async (contractAddress, farmer, contractor) => {
         console.log(`Contract ${contractAddress} completed by ${contractor}`);
 
         // Update database
-        const {
-          data: { farmerID, contractorID },
-        } = supabase
+        const { data: data1 } = await supabase
           .from("ongoingContracts")
           .select("*")
           .eq("contractID", demandNo);
+        console.log(data1);
+        const { farmerID, contractorID } = data1[0];
+
         await supabase
           .from("ongoingContracts")
           .delete()
           .eq("contractID", demandNo);
-        await supabase
+        const { error } = await supabase
           .from("archiveContracts")
           .insert([
             {
@@ -1918,8 +2069,10 @@ app.get("/getContractAddress", async (req, res) => {
             },
           ])
           .select();
+        console.log(error);
       }
     ); //
+    console.log("after contract.on");
     // console.log(tx);
   } catch (err) {
     console.log(err);
@@ -1946,7 +2099,7 @@ app.get("/contract/:contractID", async (req, res) => {
         message: "data successfully fetched",
       });
     } catch (err) {
-      // console.log(err);
+      console.log(err);
       res.status(500).send({
         message: err,
         status: "failed",
@@ -1955,6 +2108,23 @@ app.get("/contract/:contractID", async (req, res) => {
   } catch (err) {
     console.log(err);
   }
+});
+app.post("/logout", async (req, res) => {
+  const { role, id, email } = req.user;
+  const { data, error } = await supabase
+    .from("refreshLogin")
+    .delete()
+    .eq("id", id)
+    .eq("role", role);
+  res.clearCookie("refreshToken", {
+    httpOnly: true, // Prevents client-side JavaScript from accessing it
+    secure: true, // Required for HTTPS
+    sameSite: "None", // Allows cross-site cookie sharing
+    path: "/",
+  });
+  if (error) {
+    res.send({ status: "failed", message: "could not logout" });
+  } else res.send({ message: "logout successful", status: "success" });
 });
 /*
 {
