@@ -22,7 +22,7 @@ import { PersistGate } from "redux-persist/integration/react";
 import { Toaster } from "react-hot-toast";
 import AllProposalsTable from "./features/Dashboard/Proposals";
 import { useState, createContext } from "react";
-import ShowSummary from "./ui/showSummary";
+import ShowSummary from "./ui/ShowSummary";
 function App() {
   const queryClient = new QueryClient();
   const { role } = useSelector((state) => state.user);
