@@ -11,10 +11,8 @@ import styled from "styled-components";
 import DemandCard from "../../ui/DemandCard";
 import { useForm } from "react-hook-form";
 import Tags from "../../ui/multiAutocomplete";
-import supabase from "../../database/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Skeleton from "@mui/material/Skeleton";
-import axios from "axios";
 import api from "../../services/axiosApi";
 import toast from "react-hot-toast";
 const FlexIt = styled.div`
