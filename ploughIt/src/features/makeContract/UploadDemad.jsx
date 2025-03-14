@@ -11,8 +11,6 @@ import { useForm } from "react-hook-form";
 import Slider from "@mui/material/Slider";
 import styled from "styled-components";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import supabase from "../../database/supabase";
-import axios from "axios";
 import { useSelector } from "react-redux";
 import api from "../../services/axiosApi";
 import toast from "react-hot-toast";
@@ -126,8 +124,9 @@ function UploadDemand() {
     const res = await makePaymentPrompt(data);
     console.log("response after transaction", res);
     if (
-      res?.message === 
-      "MetaMask Tx Signature: User denied transaction signature." || typeof res=='object'
+      res?.message ===
+        "MetaMask Tx Signature: User denied transaction signature." ||
+      typeof res == "object"
     ) {
       toast.error("failed transaction");
       navigate("/home");
