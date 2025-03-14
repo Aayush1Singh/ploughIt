@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ProfileMini from "./ProfileMini";
 import NotificationTab from "./NotificationTab";
 import styled from "styled-components";
-import Logout from "@/services/logout";
+import Logout from "@/services/Logout";
 const Button = styled.button`
   box-shadow: 0 0;
   background-color: transparent;
