@@ -102,6 +102,22 @@ function Login() {
   return (
     <Background className="login-background">
       {/* <Loader></Loader> */}
+      <p className="absolute top-0 left-0">
+        Test credentials for contractor role:
+        <br />
+        email: abc@gmail.com
+        <br />
+        password:helloitsme
+        <br />
+        <br />
+        <br />
+        Test credentials for farmer role:
+        <br />
+        email: abc3@gmail.com
+        <br />
+        password:helloitsme
+        <br />
+      </p>
       <Form
         onSubmit={handleSubmit(onSubmit, onError)}
         className="overlay-login-form p-8"
