@@ -17,7 +17,7 @@ function Logout() {
 
   return (
     <button
-      className="hover: border-b-orange-600 hover:bg-red-500"
+      className="hover: h-15 w-60 self-center rounded-4xl border-b-orange-600 transition-all duration-[500ms] hover:bg-red-500"
       onClick={() => {
         logoutUser();
       }}
